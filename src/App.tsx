@@ -178,9 +178,35 @@ export default function App() {
         } catch (err) {
           console.error('Failed to save record to MySQL:', err);
         }
+      } else {
+        try {
+          const res = await fetch('/api/practice-sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              hand,
+              mode: result.mode,
+              inputBehavior: behavior,
+              problemCount,
+              kpm: result.kpm,
+              accuracy: result.accuracy,
+              totalKeys: result.totalKeys,
+              correctKeys: result.correctKeys,
+              wrongKeys: result.wrongKeys,
+              durationSeconds: result.durationSeconds,
+              mistakes: result.mistakes,
+            }),
+          });
+          if (!res.ok) {
+            console.error('Failed to save practice session:', res.status);
+          }
+        } catch (err) {
+          console.error('Failed to save practice session:', err);
+        }
       }
     },
-    [isRecordModeActive, userName, hand]
+    [isRecordModeActive, userName, hand, behavior, problemCount]
   );
 
   // 연습 모드 시작
