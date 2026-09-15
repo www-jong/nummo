@@ -28,7 +28,7 @@ export const NumpadVisualizer: React.FC<NumpadVisualizerProps> = ({
     <div className="flex flex-col items-center">
       {/* 상단 현재 손가락 가이드 인디케이터 */}
       {showFingerGuide && currentFinger && (
-        <div className="mb-4 flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-neutral-800 bg-neutral-900/90 text-xs tracking-wider transition-all duration-150 shadow-md">
+        <div className="mb-2 sm:mb-4 flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-neutral-800 bg-neutral-900/90 text-xs tracking-wider transition-all duration-150 shadow-md">
           <span className="text-neutral-400 font-medium">
             {hand === 'RIGHT' ? '오른손' : '왼손'}
           </span>
@@ -47,11 +47,7 @@ export const NumpadVisualizer: React.FC<NumpadVisualizerProps> = ({
 
       {/* 가상 넘패드 (17-Key 표준 레이아웃) */}
       <div
-        className="grid grid-cols-4 grid-rows-5 gap-2 p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800/80 shadow-2xl backdrop-blur-sm select-none"
-        style={{
-          width: '270px',
-          height: '330px',
-        }}
+        className="nummo-numpad grid grid-cols-4 grid-rows-5 gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800/80 shadow-2xl backdrop-blur-sm select-none"
       >
         {NUMPAD_KEYS.map((k) => {
           const isTarget = targetKeyDef?.code === k.code;

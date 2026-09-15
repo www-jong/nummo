@@ -19,8 +19,8 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   if (!isOpen || !result) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm animate-fade-in font-mono">
-      <div className="w-full max-w-md p-6 rounded-2xl bg-[#18181b] border border-neutral-800 shadow-2xl flex flex-col items-center select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 backdrop-blur-sm p-3 sm:p-4 animate-fade-in font-mono">
+      <div className="w-full max-w-md p-4 sm:p-6 rounded-2xl bg-[#18181b] border border-neutral-800 shadow-2xl flex flex-col items-center select-none">
         {/* 모달 타이틀 */}
         <div className="text-center mb-5">
           <span className="text-[11px] uppercase tracking-widest text-neutral-500 font-semibold">
@@ -35,22 +35,22 @@ export const ResultModal: React.FC<ResultModalProps> = ({
         </div>
 
         {/* 핵심 수치 그리드 */}
-        <div className="grid grid-cols-3 gap-3 w-full mb-5">
-          <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-neutral-900/90 border border-neutral-800">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full mb-5">
+          <div className="flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl bg-neutral-900/90 border border-neutral-800">
             <span className="text-[11px] text-neutral-500">타속 (KPM)</span>
-            <span className="text-2xl font-extrabold text-amber-400 mt-0.5">
+            <span className="text-xl sm:text-2xl font-extrabold text-amber-400 mt-0.5">
               {result.kpm}
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-neutral-900/90 border border-neutral-800">
+          <div className="flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl bg-neutral-900/90 border border-neutral-800">
             <span className="text-[11px] text-neutral-500">정확도</span>
-            <span className="text-2xl font-extrabold text-emerald-400 mt-0.5">
+            <span className="text-xl sm:text-2xl font-extrabold text-emerald-400 mt-0.5">
               {result.accuracy}%
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-neutral-900/90 border border-neutral-800">
+          <div className="flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl bg-neutral-900/90 border border-neutral-800">
             <span className="text-[11px] text-neutral-500">시간</span>
-            <span className="text-2xl font-extrabold text-neutral-200 mt-0.5">
+            <span className="text-xl sm:text-2xl font-extrabold text-neutral-200 mt-0.5">
               {result.durationSeconds}s
             </span>
           </div>

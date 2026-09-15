@@ -16,8 +16,8 @@ export const ConfirmResetModal: React.FC<ConfirmResetModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-sm p-6 rounded-2xl bg-[#1a1a1e] border border-neutral-800 shadow-2xl flex flex-col items-center text-center font-mono">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 animate-fade-in">
+      <div className="w-full max-w-sm p-4 sm:p-6 rounded-2xl bg-[#1a1a1e] border border-neutral-800 shadow-2xl flex flex-col items-center text-center font-mono">
         <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-3 text-lg font-bold">
           !
         </div>

@@ -142,12 +142,12 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-2xl flex flex-col items-center gap-6 p-6 font-mono animate-fade-in">
+    <div className="w-full max-w-2xl flex flex-col items-center gap-4 sm:gap-6 px-0 py-2 sm:p-6 font-mono animate-fade-in">
       {/* 1. 사용자 계정 카드 */}
-      <div className="w-full p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800 flex items-center justify-between gap-4 shadow-xl">
-        <div className="flex items-center gap-3">
+      <div className="w-full p-3.5 sm:p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-xl">
+        <div className="min-w-0 flex flex-wrap items-center gap-2 sm:gap-3">
           <span className="text-xs text-neutral-500">기록자</span>
-          <span className="text-base font-bold text-amber-400">
+          <span className="max-w-full truncate text-base font-bold text-amber-400">
             {currentUser || '게스트'}
           </span>
           {isLoggedIn ? (
@@ -155,25 +155,25 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
               인증됨
             </span>
           ) : (
-            <span className="text-[11px] text-neutral-500">
+            <span className="basis-full sm:basis-auto text-[11px] text-neutral-500">
               (로그인 시 고유 닉네임으로 저장)
             </span>
           )}
         </div>
 
         {!isLoggedIn && (
-          <form onSubmit={handleApplyUser} className="flex items-center gap-2">
+          <form onSubmit={handleApplyUser} className="w-full sm:w-auto flex items-center gap-2">
             <input
               type="text"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               placeholder="임시 닉네임"
               maxLength={20}
-              className="px-2.5 py-1 text-xs rounded-xl bg-neutral-950 border border-neutral-700 text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-amber-400 w-32"
+              className="min-w-0 flex-1 sm:flex-none px-2.5 py-2 sm:py-1 text-xs rounded-xl bg-neutral-950 border border-neutral-700 text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-amber-400 sm:w-32"
             />
             <button
               type="submit"
-              className="px-2.5 py-1 text-xs font-semibold rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors"
+              className="min-h-9 px-3 sm:px-2.5 py-1 text-xs font-semibold rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors"
             >
               변경
             </button>
@@ -182,8 +182,8 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
       </div>
 
       {/* 2. 공식 기록 측정 카드 */}
-      <div className="w-full flex flex-col gap-4 p-6 rounded-2xl bg-gradient-to-b from-neutral-900/90 to-neutral-900/50 border border-neutral-800 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+      <div className="w-full flex flex-col gap-4 p-3.5 sm:p-6 rounded-2xl bg-gradient-to-b from-neutral-900/90 to-neutral-900/50 border border-neutral-800 shadow-2xl">
+        <div className="flex flex-col min-[380px]:flex-row min-[380px]:items-center justify-between gap-3 border-b border-neutral-800 pb-3">
           <div>
             <h3 className="text-base font-bold text-neutral-100 flex items-center gap-2">
               <span className="text-amber-400">★</span> 공식 기록 측정
@@ -194,11 +194,11 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
           </div>
 
           {/* (1) 손 선택: [왼손] [오른손] */}
-          <div className="flex items-center p-1 bg-neutral-950 border border-neutral-800 rounded-xl text-xs">
+          <div className="grid grid-cols-2 min-[380px]:flex items-center w-full min-[380px]:w-auto p-1 bg-neutral-950 border border-neutral-800 rounded-xl text-xs">
             <button
               type="button"
               onClick={() => setSelectedHand('LEFT')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
+              className={`min-h-9 px-3 py-1.5 rounded-lg transition-all ${
                 selectedHand === 'LEFT'
                   ? 'bg-amber-400 text-neutral-950 font-bold shadow-md'
                   : 'text-neutral-400 hover:text-neutral-200'
@@ -209,7 +209,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
             <button
               type="button"
               onClick={() => setSelectedHand('RIGHT')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
+              className={`min-h-9 px-3 py-1.5 rounded-lg transition-all ${
                 selectedHand === 'RIGHT'
                   ? 'bg-amber-400 text-neutral-950 font-bold shadow-md'
                   : 'text-neutral-400 hover:text-neutral-200'
@@ -304,7 +304,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
         {/* 상단 탭: 전체 순위 vs 최근 기록 + 필터 */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-1">
           {/* 순위 vs 최근기록 탭 */}
-          <div className="flex items-center p-1 bg-neutral-900 border border-neutral-800 rounded-xl text-xs">
+          <div className="grid grid-cols-2 sm:flex items-center w-full sm:w-auto p-1 bg-neutral-900 border border-neutral-800 rounded-xl text-xs">
             <button
               type="button"
               onClick={() => {
@@ -335,8 +335,8 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
           </div>
 
           {/* 손 필터 & 새로고침 */}
-          <div className="flex items-center gap-2 text-[11px]">
-            <div className="flex items-center rounded-lg border border-neutral-800 bg-neutral-950 p-0.5">
+          <div className="w-full sm:w-auto flex items-center justify-between gap-2 text-[11px]">
+            <div className="grid grid-cols-3 flex-1 sm:flex-none sm:flex items-center rounded-lg border border-neutral-800 bg-neutral-950 p-0.5">
               <button
                 type="button"
                 onClick={() => setFilterHand('ALL')}
@@ -408,8 +408,57 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
           </div>
         </div>
 
-        {/* 테이블 */}
-        <div className="w-full overflow-x-auto rounded-2xl border border-neutral-800/80 bg-neutral-900/50">
+        {/* 모바일 기록 카드 */}
+        <div className="md:hidden w-full flex flex-col gap-2">
+          {isLoading ? (
+            <div className="py-8 text-center text-neutral-500 text-xs rounded-2xl border border-neutral-800/80 bg-neutral-900/50">
+              불러오는 중...
+            </div>
+          ) : records.length === 0 ? (
+            <div className="py-8 text-center text-neutral-500 text-xs rounded-2xl border border-neutral-800/80 bg-neutral-900/50">
+              해당 조건의 기록이 없습니다.
+            </div>
+          ) : (
+            records.map((r, idx) => {
+              const modeLabel = OFFICIAL_MODES.find((m) => m.id === r.mode)?.name || r.mode;
+              const rank = idx + 1;
+              return (
+                <div key={r.id} className="w-full p-3 rounded-xl border border-neutral-800/80 bg-neutral-900/60">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex items-center gap-2">
+                      {viewTab === 'RANKING' && (
+                        <span className={`shrink-0 text-sm font-bold ${rank <= 3 ? 'text-amber-400' : 'text-neutral-500'}`}>
+                          {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-bold text-neutral-200">{r.user_name}</div>
+                        <div className="mt-0.5 text-[10px] text-neutral-500">{formatKST(r.created_at)}</div>
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-lg font-bold text-amber-400">{r.kpm} <span className="text-[10px] font-normal">KPM</span></div>
+                      <div className="text-[11px] font-semibold text-emerald-400">정확도 {r.accuracy}%</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2 border-t border-neutral-800/70 pt-2">
+                    <span className="truncate text-[11px] font-medium text-neutral-400">{modeLabel}</span>
+                    <span className={`shrink-0 px-1.5 py-0.5 text-[10px] rounded border ${
+                      r.hand === 'LEFT'
+                        ? 'bg-sky-500/10 border-sky-500/30 text-sky-400'
+                        : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                    }`}>
+                      {r.hand === 'LEFT' ? '왼손' : '오른손'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* 태블릿/PC 기록 테이블 */}
+        <div className="hidden md:block w-full overflow-x-auto rounded-2xl border border-neutral-800/80 bg-neutral-900/50">
           <table className="w-full text-left text-xs">
             <thead className="text-[11px] uppercase tracking-wider text-neutral-500 border-b border-neutral-800 bg-neutral-950/40">
               <tr>

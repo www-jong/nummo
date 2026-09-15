@@ -8,3 +8,14 @@
     font-feature-settings: "tnum" 1, "zero" 1;
   }
 }
+
+.nummo-numpad {
+  width: clamp(190px, min(70vw, calc((100dvh - 330px) * 0.818)), 270px);
+  aspect-ratio: 9 / 11;
+}
+
+@media (min-width: 640px) {
+  .nummo-numpad {
+    width: 270px;
+  }
+}

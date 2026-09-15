@@ -25,8 +25,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <nav
-      className={`w-full max-w-2xl flex items-center justify-between py-3 px-4 border-b border-neutral-800/80 transition-opacity duration-300 ${
-        isPracticing ? 'opacity-20 pointer-events-none' : 'opacity-100'
+      className={`sticky top-0 md:static z-40 w-full max-w-2xl grid grid-cols-[auto_1fr] md:flex items-center md:justify-between gap-x-3 gap-y-2 py-2.5 sm:py-3 px-2 sm:px-4 bg-[#121214]/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-neutral-800/80 transition-opacity duration-300 ${
+        isPracticing ? 'md:opacity-20 md:pointer-events-none' : 'opacity-100'
       }`}
     >
       {/* 로고 */}
@@ -37,11 +37,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* 대메뉴 탭: 연습 모드 vs 기록 모드 */}
-      <div className="flex items-center p-1 bg-neutral-900 border border-neutral-800 rounded-xl font-mono text-xs">
+      <div className="order-3 col-span-2 md:order-none md:col-span-1 grid grid-cols-2 md:flex items-center w-full md:w-auto p-1 bg-neutral-900 border border-neutral-800 rounded-xl font-mono text-xs">
         <button
           type="button"
           onClick={() => onSelectTab('PRACTICE')}
-          className={`px-4 py-1.5 rounded-lg transition-all ${
+          className={`min-h-9 px-3 sm:px-4 py-1.5 rounded-lg transition-all ${
             currentTab === 'PRACTICE'
               ? 'bg-neutral-800 text-amber-300 font-bold shadow-sm border border-neutral-700'
               : 'text-neutral-400 hover:text-neutral-200'
@@ -52,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={() => onSelectTab('RECORDS')}
-          className={`px-4 py-1.5 rounded-lg transition-all ${
+          className={`min-h-9 px-3 sm:px-4 py-1.5 rounded-lg transition-all ${
             currentTab === 'RECORDS'
               ? 'bg-neutral-800 text-amber-300 font-bold shadow-sm border border-neutral-700'
               : 'text-neutral-400 hover:text-neutral-200'
@@ -63,10 +63,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* 우측 사용자 / 로그인 상태 */}
-      <div className="text-xs font-mono flex items-center gap-2.5">
+      <div className="justify-self-end min-w-0 text-xs font-mono flex items-center gap-2.5">
         {isLoggedIn ? (
-          <div className="flex items-center gap-2">
-            <span className="text-amber-300 font-bold bg-neutral-900 px-2 py-1 rounded-md border border-neutral-800">
+          <div className="min-w-0 flex items-center gap-2">
+            <span className="max-w-28 sm:max-w-40 truncate text-amber-300 font-bold bg-neutral-900 px-2 py-1 rounded-md border border-neutral-800">
               {currentUser}
             </span>
             <button
@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-neutral-100 border border-neutral-700 text-xs font-medium transition-all shadow-sm active:scale-95"
+            className="min-h-9 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-neutral-100 border border-neutral-700 text-xs font-medium whitespace-nowrap transition-all shadow-sm active:scale-95"
           >
             {/* Google SVG Icon */}
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">

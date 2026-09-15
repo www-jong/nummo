@@ -229,8 +229,8 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   return (
     <div className="flex flex-col items-center w-full max-w-xl">
       {/* 상태 바 */}
-      <div className="flex items-center justify-between w-full px-4 mb-3 text-xs font-mono text-neutral-400">
-        <div className="flex items-center gap-5">
+      <div className="flex items-center justify-between gap-2 w-full px-1 sm:px-4 mb-2 sm:mb-3 text-xs font-mono text-neutral-400">
+        <div className="flex items-center gap-3 sm:gap-5">
           <div>
             <span className="text-neutral-500">KPM </span>
             <span className="text-amber-400 font-bold text-sm">{currentKpm}</span>
@@ -241,14 +241,14 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-neutral-500 font-medium">
             {problemIndex + 1} / {problems.length}
           </span>
           <button
             type="button"
             onClick={resetPractice}
-            className="text-[11px] text-neutral-400 hover:text-white px-2 py-0.5 rounded border border-neutral-800 hover:border-neutral-700 transition-colors"
+            className="min-h-8 text-[11px] text-neutral-400 hover:text-white px-2 py-0.5 rounded border border-neutral-800 hover:border-neutral-700 transition-colors"
           >
             다시 시작
           </button>
@@ -256,7 +256,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       </div>
 
       {/* 수식 타이핑 디스플레이 */}
-      <div className="relative w-full p-6 rounded-2xl bg-neutral-900/70 border border-neutral-800 flex items-center justify-center min-h-[90px] shadow-xl backdrop-blur-sm overflow-hidden">
+      <div className="relative w-full px-2 sm:px-6 py-4 sm:py-6 rounded-2xl bg-neutral-900/70 border border-neutral-800 flex items-center justify-center min-h-[76px] sm:min-h-[90px] shadow-xl backdrop-blur-sm overflow-hidden">
         {/* 일시정지 오버레이 */}
         {isPaused && (
           <div className="absolute inset-0 z-20 bg-neutral-950/85 backdrop-blur-sm flex items-center justify-center gap-4 animate-fade-in">
@@ -274,7 +274,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
           </div>
         )}
 
-        <div className="text-3xl font-mono tracking-widest flex items-center select-none">
+        <div className="max-w-full text-[clamp(1.15rem,6.4vw,1.875rem)] font-mono tracking-[0.1em] sm:tracking-widest flex items-center whitespace-nowrap select-none">
           {currentFormula.split('').map((targetChar, idx) => {
             const isTyped = idx < typedHistory.length;
             const isCurrent = idx === typedHistory.length;

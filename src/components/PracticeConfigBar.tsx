@@ -39,9 +39,9 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
   const selectedModeMeta = PRACTICE_MODES.find((m) => m.id === mode) || PRACTICE_MODES[0];
 
   return (
-    <div className="w-full max-w-2xl flex flex-col gap-5 p-6 rounded-3xl bg-neutral-900/90 border border-neutral-800 shadow-2xl backdrop-blur-md font-mono animate-fade-in select-none">
+    <div className="w-full max-w-2xl flex flex-col gap-4 sm:gap-5 p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-neutral-900/90 border border-neutral-800 shadow-2xl backdrop-blur-md font-mono animate-fade-in select-none">
       {/* 타이틀 및 헤더 */}
-      <div className="flex items-center justify-between border-b border-neutral-800/80 pb-3.5">
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-neutral-800/80 pb-3.5">
         <div>
           <h2 className="text-base font-bold text-neutral-100 flex items-center gap-2">
             연습 세션 설정
@@ -156,7 +156,7 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
 
       {/* 2. 연산 모드 선택 (칩 그리드) */}
       <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-neutral-950/60 border border-neutral-800/80">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <span className="text-[11px] font-semibold text-neutral-400">연습 테마</span>
           <span className="text-[11px] text-neutral-500">
             {selectedModeMeta.description}
@@ -191,7 +191,7 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
         </div>
 
         {/* 선택된 모드의 실시간 문제 예시 미리보기 박스 */}
-        <div className="mt-2.5 p-3 rounded-xl bg-neutral-900/90 border border-neutral-800/90 flex items-center justify-between">
+        <div className="mt-2.5 p-3 rounded-xl bg-neutral-900/90 border border-neutral-800/90 flex flex-col min-[380px]:flex-row min-[380px]:items-center justify-between gap-1.5">
           <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">
               예시 문제
@@ -209,9 +209,9 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
       {/* 3. 문항 수 선택 & 연습 시작 버튼 */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
         {/* 문항 수 */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="w-full sm:w-auto flex flex-wrap items-center gap-2">
           <span className="text-[11px] text-neutral-400 font-medium">문항 수:</span>
-          <div className="flex items-center gap-2">
+          <div className="w-full min-[390px]:w-auto flex flex-wrap items-center gap-2">
             {/* 5, 10, 20 프리셋 (h-9 통일) */}
             <div className="h-9 flex items-center p-1 bg-neutral-950 border border-neutral-800 rounded-xl">
               {[5, 10, 20].map((cnt) => (
@@ -231,7 +231,7 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
             </div>
 
             {/* 수동 직접 입력 (h-9 통일, 자유 편집 지원) */}
-            <div className="h-9 flex items-center gap-1.5 px-3 rounded-xl bg-neutral-950 border border-neutral-800">
+            <div className="h-9 flex flex-1 min-[390px]:flex-none items-center justify-center gap-1.5 px-2.5 sm:px-3 rounded-xl bg-neutral-950 border border-neutral-800">
               <input
                 type="text"
                 inputMode="numeric"

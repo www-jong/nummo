@@ -227,7 +227,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#121214] text-neutral-200 flex flex-col items-center justify-between p-4 select-none font-mono">
+    <div className={`${viewPhase === 'TYPING' ? 'h-[100dvh] overflow-hidden' : 'min-h-screen min-h-[100dvh] overflow-x-clip'} bg-[#121214] text-neutral-200 flex flex-col items-center justify-between p-0 sm:p-4 select-none font-mono`}>
       {/* 1. 상단 네비바 */}
       <Navbar
         currentTab={mainTab}
@@ -245,19 +245,19 @@ export default function App() {
       />
 
       {/* 2. 메인 컨텐츠 영역 */}
-      <main className="w-full flex-1 flex flex-col items-center justify-center my-4">
+      <main className="min-h-0 w-full flex-1 flex flex-col items-center justify-start sm:justify-center px-2 sm:px-0 my-2 sm:my-4">
         {/* [A] 타이핑 집중 단계 (TYPING) -> 진짜 넘패드와 문제창, 정확도만 표시되는 극강의 미니멀 뷰 */}
         {viewPhase === 'TYPING' ? (
-          <div className="w-full flex flex-col items-center gap-4 animate-fade-in">
+          <div className="h-full min-h-0 w-full flex flex-col items-center justify-center gap-2 sm:gap-4 animate-fade-in">
             {/* 공식 기록 모드 뱃지 */}
             {isRecordModeActive && (
-              <div className="px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold flex items-center gap-2">
-                <span>★ 공식 기록 측정 중 ({userName} · {hand === 'LEFT' ? '왼손' : '오른손'} · {problemCount}문항)</span>
+              <div className="max-w-full px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[11px] sm:text-xs text-center font-semibold flex items-center gap-2">
+                <span className="truncate">★ 공식 기록 측정 중 ({userName} · {hand === 'LEFT' ? '왼손' : '오른손'} · {problemCount}문항)</span>
               </div>
             )}
 
             {/* 상단 현재 선택된 설정 요약 뱃지 바 */}
-            <div className="flex items-center justify-between w-full max-w-xl px-2 py-1 text-xs font-mono">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 w-full max-w-xl px-1 sm:px-2 py-1 text-xs font-mono">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="px-2 py-0.5 rounded-md bg-neutral-900/90 border border-neutral-800 text-amber-300 font-bold text-[11px]">
                   {PRACTICE_MODES.find((m) => m.id === mode)?.name || mode}
@@ -273,7 +273,7 @@ export default function App() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between sm:justify-end gap-2">
                 {/* 일시정지 버튼 */}
                 <button
                   type="button"
@@ -287,7 +287,7 @@ export default function App() {
                   {isPaused ? '계속하기 ▶' : '일시정지 ❚❚'}
                 </button>
 
-                {/* 설정 변경 버튼 */}
+                {/* 연습 중지 버튼 */}
                 <button
                   type="button"
                   onClick={() => {
@@ -296,11 +296,10 @@ export default function App() {
                     setIsPaused(false);
                     setResetTrigger((prev) => prev + 1);
                   }}
-                  className="text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors flex items-center gap-1"
-                  title="설정 화면으로 돌아가기 (ESC)"
+                  className="min-h-8 px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/20 transition-colors"
+                  title="연습을 중지하고 설정 화면으로 돌아가기"
                 >
-                  <span>설정</span>
-                  <span className="text-[10px] text-neutral-600 border border-neutral-800 px-1 rounded">ESC</span>
+                  연습 중지
                 </button>
               </div>
             </div>
@@ -364,7 +363,7 @@ export default function App() {
       </main>
 
       {/* 3. 하단 푸터 (불필요한 글자 완전 제거, 빈 공간 유지) */}
-      <footer className="h-4" />
+      {viewPhase !== 'TYPING' && <footer className="h-4" />}
 
       {/* 4. 세션 완료 결과 모달 */}
       <ResultModal
