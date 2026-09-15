@@ -87,14 +87,14 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
 
   // 필터
   const [filterHand, setFilterHand] = useState<'ALL' | HandType>('ALL');
-  const [filterMode, setFilterMode] = useState<'ALL' | PracticeCategory>('ALL');
+  const [filterMode, setFilterMode] = useState<'ALL' | PracticeCategory>('CALC_MIXED');
 
   const [records, setRecords] = useState<RecordItem[]>([]);
   const [nameInput, setNameInput] = useState<string>(currentUser);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // 기록/순위 불러오기
-  const fetchRecords = useCallback(async () => {
+  const fetchRecords = useCallback(async (forceRefresh = false, signal?: AbortSignal) => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ limit: '30' });
@@ -109,21 +109,25 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
       }
       if (filterHand !== 'ALL') params.set('hand', filterHand);
       if (filterMode !== 'ALL') params.set('mode', filterMode);
+      if (forceRefresh) params.set('refresh', 'true');
 
-      const res = await fetch(`/api/records?${params.toString()}`);
+      const res = await fetch(`/api/records?${params.toString()}`, { signal });
       if (res.ok) {
         const data = await res.json();
-        setRecords(data);
+        if (!signal?.aborted) setRecords(data);
       }
     } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
       console.error('Failed to fetch records:', e);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, [currentUser, viewTab, filterHand, filterMode]);
 
   useEffect(() => {
-    fetchRecords();
+    const controller = new AbortController();
+    fetchRecords(false, controller.signal);
+    return () => controller.abort();
   }, [fetchRecords]);
 
   useEffect(() => {
@@ -303,7 +307,10 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
           <div className="flex items-center p-1 bg-neutral-900 border border-neutral-800 rounded-xl text-xs">
             <button
               type="button"
-              onClick={() => setViewTab('RANKING')}
+              onClick={() => {
+                setViewTab('RANKING');
+                if (filterMode === 'ALL') setFilterMode('CALC_MIXED');
+              }}
               className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                 viewTab === 'RANKING'
                   ? 'bg-neutral-800 text-amber-300 font-bold border border-neutral-700 shadow-sm'
@@ -311,7 +318,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
               }`}
             >
               <span>🏆</span>
-              <span>전체 순위</span>
+              <span>종목별 순위</span>
             </button>
             <button
               type="button"
@@ -355,11 +362,49 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
 
             <button
               type="button"
-              onClick={fetchRecords}
+              onClick={() => fetchRecords(true)}
               className="text-neutral-500 hover:text-neutral-300 text-[11px] underline"
             >
               새로고침
             </button>
+          </div>
+        </div>
+
+        {/* 종목별 순위/기록 필터 */}
+        <div className="flex flex-col gap-2 px-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] text-neutral-500">
+              {viewTab === 'RANKING' ? '사용자별 최고 기록 기준' : '종목 필터'}
+            </span>
+          </div>
+          <div className={`grid grid-cols-2 ${viewTab === 'RANKING' ? 'sm:grid-cols-3' : 'sm:grid-cols-4'} gap-1.5 rounded-xl border border-neutral-800 bg-neutral-950 p-1`}>
+            {viewTab === 'LATEST' && (
+              <button
+                type="button"
+                onClick={() => setFilterMode('ALL')}
+                className={`px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+                  filterMode === 'ALL'
+                    ? 'bg-neutral-800 text-amber-300 font-bold'
+                    : 'text-neutral-500 hover:text-neutral-300'
+                }`}
+              >
+                전체 종목
+              </button>
+            )}
+            {OFFICIAL_MODES.map((mode) => (
+              <button
+                key={mode.id}
+                type="button"
+                onClick={() => setFilterMode(mode.id)}
+                className={`px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+                  filterMode === mode.id
+                    ? 'bg-neutral-800 text-amber-300 font-bold'
+                    : 'text-neutral-500 hover:text-neutral-300'
+                }`}
+              >
+                {mode.name}
+              </button>
+            ))}
           </div>
         </div>
 

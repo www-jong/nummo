@@ -312,6 +312,50 @@ app.get('/api/users', async (request, reply) => {
   }
 });
 
+interface RecordsCacheEntry {
+  expiresAt: number;
+  records: RowDataPacket[];
+}
+
+const recordsCache = new Map<string, RecordsCacheEntry>();
+const RECORDS_CACHE_MAX_ENTRIES = 100;
+const RANKING_CACHE_TTL_MS = 60 * 1000;
+const LATEST_CACHE_TTL_MS = 15 * 1000;
+
+function getRecordsCacheKey(options: {
+  user?: string;
+  hand?: string;
+  mode?: string;
+  limit: number;
+  sort: 'latest' | 'ranking';
+}): string {
+  return JSON.stringify({
+    user: options.user || '',
+    hand: options.hand || '',
+    mode: options.mode || '',
+    limit: options.limit,
+    sort: options.sort,
+  });
+}
+
+function getCachedRecords(key: string): RowDataPacket[] | null {
+  const cached = recordsCache.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    recordsCache.delete(key);
+    return null;
+  }
+  return cached.records;
+}
+
+function setCachedRecords(key: string, records: RowDataPacket[], ttlMs: number): void {
+  if (recordsCache.size >= RECORDS_CACHE_MAX_ENTRIES) {
+    const oldestKey = recordsCache.keys().next().value;
+    if (oldestKey) recordsCache.delete(oldestKey);
+  }
+  recordsCache.set(key, { records, expiresAt: Date.now() + ttlMs });
+}
+
 // 기록 조회 (유저별, 모드별, 손별, 정렬별)
 app.get('/api/records', {
   schema: {
@@ -323,46 +367,82 @@ app.get('/api/records', {
         mode: { type: 'string', maxLength: 50 },
         limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
         sort: { type: 'string', enum: ['latest', 'ranking'], default: 'latest' },
+        refresh: { type: 'boolean', default: false },
       },
     },
   },
 }, async (request, reply) => {
-  const { user, hand, mode, limit = 20, sort = 'latest' } = request.query as {
+  const { user, hand, mode, limit = 20, sort = 'latest', refresh = false } = request.query as {
     user?: string;
     hand?: string;
     mode?: string;
     limit?: number;
     sort?: 'latest' | 'ranking';
+    refresh?: boolean;
   };
 
   try {
+    const cacheKey = getRecordsCacheKey({ user, hand, mode, limit, sort });
+    if (!refresh) {
+      const cached = getCachedRecords(cacheKey);
+      if (cached) {
+        reply.header('X-Records-Cache', 'HIT');
+        return cached;
+      }
+    }
+
     const pool = getPool();
-    let query = 'SELECT * FROM records WHERE 1=1';
+    const filters: string[] = [];
     const params: (string | number)[] = [];
 
     if (user) {
-      query += ' AND user_name = ?';
+      filters.push('user_name = ?');
       params.push(user);
     }
     if (hand) {
-      query += ' AND hand = ?';
+      filters.push('hand = ?');
       params.push(hand);
     }
     if (mode) {
-      query += ' AND mode = ?';
+      filters.push('mode = ?');
       params.push(mode);
     }
 
+    const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
+    let query: string;
     if (sort === 'ranking') {
-      // 랭킹: KPM 최고 기록 순, 동일 시 정확도 높은 순
-      query += ' ORDER BY kpm DESC, accuracy DESC, created_at DESC LIMIT ?';
+      // 사용자마다 해당 조건의 최고 기록 한 건만 순위에 포함
+      query = `
+        SELECT id, user_name, hand, mode, kpm, accuracy, total_keys,
+               correct_keys, wrong_keys, duration_seconds, created_at
+        FROM (
+          SELECT records.*,
+                 ROW_NUMBER() OVER (
+                   PARTITION BY user_name
+                   ORDER BY kpm DESC, accuracy DESC, created_at DESC
+                 ) AS user_best_rank
+          FROM records
+          ${whereClause}
+        ) AS ranked_records
+        WHERE user_best_rank = 1
+        ORDER BY kpm DESC, accuracy DESC, created_at DESC
+        LIMIT ?`;
     } else {
-      // 최신순
-      query += ' ORDER BY created_at DESC LIMIT ?';
+      query = `
+        SELECT * FROM records
+        ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT ?`;
     }
     params.push(limit);
 
     const [records] = await pool.query<RowDataPacket[]>(query, params);
+    setCachedRecords(
+      cacheKey,
+      records,
+      sort === 'ranking' ? RANKING_CACHE_TTL_MS : LATEST_CACHE_TTL_MS
+    );
+    reply.header('X-Records-Cache', 'MISS');
     return records;
   } catch (err) {
     app.log.error(err);
@@ -458,6 +538,7 @@ app.post('/api/records', {
     }
 
     await conn.commit();
+    recordsCache.clear();
     return { success: true, recordId };
   } catch (err) {
     await conn.rollback();
