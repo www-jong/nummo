@@ -1,0 +1,15 @@
+// Add this block to the existing Alloy configuration.
+// The nummo and alloy containers must share proxy-network.
+prometheus.scrape "nummo" {
+  targets = [
+    {
+      "__address__" = "nummo:9464",
+      "job"         = "nummo",
+    },
+  ]
+
+  metrics_path    = "/metrics"
+  scrape_interval = "15s"
+  scrape_timeout  = "5s"
+  forward_to      = [prometheus.remote_write.local.receiver]
+}

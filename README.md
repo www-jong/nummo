@@ -71,6 +71,7 @@ DB_NAME=nummo
 
 # Server Settings
 PORT=3000
+METRICS_PORT=9464
 
 # Google OAuth 2.0 Credentials
 GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
@@ -113,6 +114,38 @@ npm run build
 
 # 단일 프로덕션 서버 실행 (포트 3000)
 npm start
+```
+
+### 6. Prometheus / Alloy 모니터링
+
+애플리케이션과 Alloy 컨테이너는 외부 Docker 네트워크 `proxy-network`를 공유합니다.
+메트릭 포트 `9464`는 호스트에 publish하지 않고 Docker 네트워크 내부에서만 사용합니다.
+
+기존 Alloy 설정에 [`monitoring/alloy-nummo.alloy`](monitoring/alloy-nummo.alloy)의
+`prometheus.scrape "nummo"` 블록을 추가한 뒤 Alloy를 재시작합니다.
+
+상태 점검 엔드포인트:
+
+- `/api/health/live`: 프로세스 생존 여부, DB 요청 없음
+- `/api/health/ready`: DB 연결 포함, 연결 실패 시 HTTP 503
+- `nummo:9464/metrics`: Prometheus 전용 내부 엔드포인트
+
+Grafana Prometheus 기본 확인 쿼리:
+
+```promql
+up{job="nummo"}
+nummo_database_up{service="nummo"}
+sum(rate(nummo_http_requests_total{service="nummo"}[5m]))
+histogram_quantile(0.95, sum by (le) (rate(nummo_http_request_duration_seconds_bucket{service="nummo"}[5m])))
+sum(rate(nummo_records_cache_requests_total{service="nummo",result="hit"}[5m]))
+sum by (actor_type, mode, hand) (increase(nummo_practice_sessions_saved_total{service="nummo",result="success"}[24h]))
+```
+
+Loki에서는 Docker Compose가 부여한 `service` 라벨과 JSON 로그를 사용합니다.
+
+```logql
+{service="nummo"} | json
+{service="nummo"} | json | level >= 40
 ```
 
 ---
