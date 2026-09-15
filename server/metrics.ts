@@ -75,6 +75,13 @@ export const officialRecordsSavedTotal = new Counter({
   registers: [metricsRegistry],
 });
 
+export const practiceSessionsSavedTotal = new Counter({
+  name: 'nummo_practice_sessions_saved_total',
+  help: 'Practice session save attempts by result, actor type, category, and hand',
+  labelNames: ['result', 'actor_type', 'mode', 'hand'] as const,
+  registers: [metricsRegistry],
+});
+
 const requestStartTimes = new WeakMap<FastifyRequest, bigint>();
 
 export function registerHttpMetrics(app: FastifyInstance): void {
