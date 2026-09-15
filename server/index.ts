@@ -9,6 +9,16 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { getPool, testConnection } from './db.js';
+import {
+  databaseQueryDurationSeconds,
+  databaseUp,
+  officialRecordsSavedTotal,
+  oauthEventsTotal,
+  recordsCacheEntries,
+  recordsCacheRequestsTotal,
+  registerHttpMetrics,
+  startMetricsServer,
+} from './metrics.js';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -17,7 +27,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = fastify({
-  logger: process.env.NODE_ENV !== 'production',
+  logger: true,
   trustProxy: true, // Nginx Proxy Manager 등 리버스 프록시 지원
 });
 
@@ -36,6 +46,7 @@ await app.register(rateLimit, {
 });
 
 await app.register(fastifyCookie);
+registerHttpMetrics(app);
 
 // 2. 정적 파일 서빙 (dist/ 서빙)
 const distPath = fs.existsSync(path.resolve(__dirname, '../dist'))
@@ -70,7 +81,8 @@ function getOAuthRedirectUri(request: any): string {
 app.get('/api/auth/google/login', async (request, reply) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const redirectUri = getOAuthRedirectUri(request);
-  console.log(`[OAuth Login] Starting with redirect_uri: ${redirectUri}`);
+  oauthEventsTotal.inc({ result: 'started' });
+  request.log.info({ event: 'oauth_started', redirectUri }, 'Google OAuth started');
 
   if (!clientId) {
     reply.status(500).send({ error: 'GOOGLE_CLIENT_ID is not configured' });
@@ -91,10 +103,14 @@ app.get('/api/auth/google/login', async (request, reply) => {
 app.get('/api/auth/google/callback', async (request, reply) => {
   const { code, error } = request.query as { code?: string; error?: string };
   const redirectUri = getOAuthRedirectUri(request);
-  console.log(`[OAuth Callback] Entry query code: ${!!code}, error: ${error}, redirect_uri: ${redirectUri}`);
+  request.log.info(
+    { event: 'oauth_callback_received', hasCode: Boolean(code), oauthError: error || null, redirectUri },
+    'Google OAuth callback received'
+  );
 
   if (error || !code) {
-    app.log.error(`Google OAuth error or missing code: ${error}`);
+    oauthEventsTotal.inc({ result: 'cancelled' });
+    request.log.warn({ event: 'oauth_cancelled', oauthError: error || 'missing_code' }, 'Google OAuth cancelled');
     return reply.redirect('/?login_error=cancelled');
   }
 
@@ -117,19 +133,21 @@ app.get('/api/auth/google/callback', async (request, reply) => {
     });
 
     if (!tokenRes.ok) {
-      const errText = await tokenRes.text();
-      app.log.error(`Token exchange failed: ${errText}`);
+      oauthEventsTotal.inc({ result: 'token_failed' });
+      request.log.error({ event: 'oauth_token_failed', statusCode: tokenRes.status }, 'OAuth token exchange failed');
       return reply.redirect('/?login_error=token_failed');
     }
 
     const tokenData = (await tokenRes.json()) as { id_token?: string };
     if (!tokenData.id_token) {
+      oauthEventsTotal.inc({ result: 'missing_id_token' });
       return reply.redirect('/?login_error=no_id_token');
     }
 
     // id_token payload 디코딩 (sub: 고유 식별자만 추출, 개인정보 일절 배제)
     const tokenParts = tokenData.id_token.split('.');
     if (tokenParts.length < 2) {
+      oauthEventsTotal.inc({ result: 'invalid_id_token' });
       return reply.redirect('/?login_error=invalid_token');
     }
 
@@ -137,6 +155,7 @@ app.get('/api/auth/google/callback', async (request, reply) => {
     const googleId = payload.sub;
 
     if (!googleId) {
+      oauthEventsTotal.inc({ result: 'missing_subject' });
       return reply.redirect('/?login_error=no_sub');
     }
 
@@ -156,7 +175,8 @@ app.get('/api/auth/google/callback', async (request, reply) => {
         httpOnly: false, // 프론트엔드 렌더링용
         sameSite: 'lax',
       });
-      console.log(`[OAuth Callback] Existing user logged in: ${nickname}`);
+      oauthEventsTotal.inc({ result: 'success_existing' });
+      request.log.info({ event: 'oauth_completed', userType: 'existing' }, 'Google OAuth completed');
       return reply.redirect('/?login=success');
     } else {
       // 신규 회원 -> 임시 세션 쿠키 발급 후 닉네임 설정 모달 유도
@@ -166,10 +186,12 @@ app.get('/api/auth/google/callback', async (request, reply) => {
         httpOnly: true,
         sameSite: 'lax',
       });
-      console.log(`[OAuth Callback] New user pending nickname setup: ${googleId}`);
+      oauthEventsTotal.inc({ result: 'success_new' });
+      request.log.info({ event: 'oauth_completed', userType: 'new' }, 'Google OAuth completed');
       return reply.redirect('/?login=needs_nickname');
     }
   } catch (err) {
+    oauthEventsTotal.inc({ result: 'internal_error' });
     app.log.error(err);
     return reply.redirect('/?login_error=internal');
   }
@@ -209,7 +231,6 @@ app.get('/api/auth/check-nickname', async (request, reply) => {
 // 4. 신규 유저 닉네임 최종 등록 API
 app.post('/api/auth/register-nickname', async (request, reply) => {
   const googleId = request.cookies.nummo_pending_sub;
-  console.log('[Auth Register Nickname] Pending googleId:', googleId, 'body:', request.body);
 
   if (!googleId) {
     return reply.status(401).send({ error: '구글 로그인 인증 세션이 만료되었습니다. 다시 로그인해주세요.' });
@@ -242,7 +263,7 @@ app.post('/api/auth/register-nickname', async (request, reply) => {
       [googleId, trimmed]
     );
 
-    console.log(`[Auth Register Nickname] User successfully registered: ${trimmed} (${googleId})`);
+    request.log.info({ event: 'nickname_registered' }, 'Nickname registration completed');
 
     // 성공 시 임시 쿠키 제거 & 로그인 쿠키 발급
     reply.clearCookie('nummo_pending_sub', { path: '/' });
@@ -268,8 +289,6 @@ app.get('/api/auth/me', async (request, reply) => {
   const userCookie = request.cookies.nummo_user;
   const pendingCookie = request.cookies.nummo_pending_sub;
 
-  console.log('[Auth /me]', { userCookie, pendingCookie });
-
   if (userCookie) {
     return { loggedIn: true, nickname: userCookie, needsNickname: false };
   }
@@ -289,8 +308,31 @@ app.post('/api/auth/logout', async (request, reply) => {
 });
 
 // 헬스체크 & DB 상태
-app.get('/api/health', async (request, reply) => {
+app.get('/api/health/live', async () => {
+  return { status: 'ok', timestamp: new Date().toISOString() };
+});
+
+app.get('/api/health/ready', async (request, reply) => {
+  const dbCheckTimer = databaseQueryDurationSeconds.startTimer({ operation: 'health_ping' });
   const dbOk = await testConnection();
+  dbCheckTimer();
+  databaseUp.set(dbOk ? 1 : 0);
+  if (!dbOk) {
+    request.log.warn({ event: 'database_unavailable' }, 'Readiness check failed');
+    reply.status(503);
+  }
+  return {
+    status: dbOk ? 'ready' : 'not_ready',
+    timestamp: new Date().toISOString(),
+    database: dbOk ? 'connected' : 'disconnected',
+  };
+});
+
+app.get('/api/health', async () => {
+  const dbCheckTimer = databaseQueryDurationSeconds.startTimer({ operation: 'health_ping' });
+  const dbOk = await testConnection();
+  dbCheckTimer();
+  databaseUp.set(dbOk ? 1 : 0);
   return {
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -386,10 +428,12 @@ app.get('/api/records', {
     if (!refresh) {
       const cached = getCachedRecords(cacheKey);
       if (cached) {
+        recordsCacheRequestsTotal.inc({ result: 'hit' });
         reply.header('X-Records-Cache', 'HIT');
         return cached;
       }
     }
+    recordsCacheRequestsTotal.inc({ result: refresh ? 'refresh' : 'miss' });
 
     const pool = getPool();
     const filters: string[] = [];
@@ -442,6 +486,7 @@ app.get('/api/records', {
       records,
       sort === 'ranking' ? RANKING_CACHE_TTL_MS : LATEST_CACHE_TTL_MS
     );
+    recordsCacheEntries.set(recordsCache.size);
     reply.header('X-Records-Cache', 'MISS');
     return records;
   } catch (err) {
@@ -539,9 +584,12 @@ app.post('/api/records', {
 
     await conn.commit();
     recordsCache.clear();
+    recordsCacheEntries.set(0);
+    officialRecordsSavedTotal.inc({ result: 'success', mode: body.mode, hand: body.hand });
     return { success: true, recordId };
   } catch (err) {
     await conn.rollback();
+    officialRecordsSavedTotal.inc({ result: 'failure', mode: body.mode, hand: body.hand });
     app.log.error(err);
     reply.status(500).send({ error: 'Failed to save record' });
   } finally {
@@ -559,12 +607,14 @@ app.setNotFoundHandler((request, reply) => {
 });
 
 const port = Number(process.env.PORT) || 3001;
+const metricsPort = Number(process.env.METRICS_PORT) || 9464;
 const host = '0.0.0.0';
 
+startMetricsServer(metricsPort);
 app.listen({ port, host }, (err, address) => {
   if (err) {
     app.log.error(err);
     process.exit(1);
   }
-  console.log(`[NUMMO Server] running on ${address}`);
+  app.log.info({ event: 'server_started', address, metricsPort }, 'NUMMO server started');
 });

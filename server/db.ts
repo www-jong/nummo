@@ -42,8 +42,7 @@ export async function testConnection(): Promise<boolean> {
     await conn.ping();
     conn.release();
     return true;
-  } catch (err) {
-    console.error('[DB] Connection test failed:', err);
+  } catch {
     return false;
   }
 }
