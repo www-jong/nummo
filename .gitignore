@@ -1,0 +1,56 @@
+# Environment Variables
+.env
+.env.*
+!.env.example
+*.local
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.npm/
+.yarn/
+
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Production Build
+.next/
+out/
+build/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+*.pid
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.pem
+*.key
+*.p12
+*.pfx
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak

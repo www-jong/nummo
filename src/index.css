@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    margin: 0;
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
+}

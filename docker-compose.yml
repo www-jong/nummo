@@ -1,0 +1,13 @@
+services:
+  nummo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nummo
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

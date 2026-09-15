@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c1c20"/>
+      <stop offset="100%" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="enterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="keyShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="1" stdDeviation="0.8" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Numpad Outer Housing -->
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#bgGrad)" stroke="#3f3f46" stroke-width="2.5" />
+
+  <!-- Keypad Matrix -->
+  <g filter="url(#keyShadow)">
+    <!-- Row 1: 7, 8, 9, - -->
+    <rect x="11" y="11" width="8.5" height="8.5" rx="2" fill="#27272a" />
+    <rect x="22" y="11" width="8.5" height="8.5" rx="2" fill="#27272a" />
+    <rect x="33" y="11" width="8.5" height="8.5" rx="2" fill="#27272a" />
+    <rect x="44" y="11" width="8.5" height="8.5" rx="2" fill="#3f3f46" />
+
+    <!-- Row 2: 4, 5, 6, + -->
+    <rect x="11" y="22" width="8.5" height="8.5" rx="2" fill="#27272a" />
+    <rect x="22" y="22" width="8.5" height="8.5" rx="2" fill="#323238" />
+    <!-- 5 Key Center Tactile Dot -->
+    <circle cx="26.25" cy="26.25" r="0.9" fill="#a1a1aa" />
+    <rect x="33" y="22" width="8.5" height="8.5" rx="2" fill="#27272a" />
+    <rect x="44" y="22" width="8.5" height="8.5" rx="2" fill="#3f3f46" />
+
+    <!-- Row 3: 1, 2, 3 -->
+    <rect x="11" y="33" width="8.5" height="8.5" rx="2" fill="#27272a" />
+    <rect x="22" y="33" width="8.5" height="8.5" rx="2" fill="#27272a" />
+    <rect x="33" y="33" width="8.5" height="8.5" rx="2" fill="#27272a" />
+
+    <!-- Row 4: 0 (Wide 2-column key), . (Decimal dot) -->
+    <rect x="11" y="44" width="19.5" height="8.5" rx="2.5" fill="#27272a" />
+    <rect x="33" y="44" width="8.5" height="8.5" rx="2" fill="#27272a" />
+    <circle cx="37.25" cy="48.25" r="1.1" fill="#e4e4e7" />
+
+    <!-- Signature Tall Enter Key (Amber Highlight) -->
+    <rect x="44" y="33" width="8.5" height="19.5" rx="2.5" fill="url(#enterGrad)" stroke="#d97706" stroke-width="0.5" />
+  </g>
+</svg>
