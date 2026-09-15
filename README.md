@@ -141,6 +141,10 @@ sum(rate(nummo_records_cache_requests_total{service="nummo",result="hit"}[5m]))
 sum by (actor_type, mode, hand) (increase(nummo_practice_sessions_saved_total{service="nummo",result="success"}[24h]))
 ```
 
+Grafana 13에서는 **Dashboards → New → Import**에서
+[`monitoring/grafana/nummo-dashboard.json`](monitoring/grafana/nummo-dashboard.json)을 업로드하고
+Prometheus 및 Loki 데이터소스를 선택합니다.
+
 Loki에서는 Docker Compose가 부여한 `service` 라벨과 JSON 로그를 사용합니다.
 
 ```logql
