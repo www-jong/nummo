@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { HandType, PracticeCategory, InputBehavior, SessionResult } from './types/index.js';
 import { Navbar, MainTab } from './components/Navbar.js';
 import { PracticeConfigBar } from './components/PracticeConfigBar.js';

@@ -287,7 +287,7 @@ app.post('/api/auth/register-nickname', async (request, reply) => {
 });
 
 // 5. 현재 로그인 세션 확인 API
-app.get('/api/auth/me', async (request, reply) => {
+app.get('/api/auth/me', async (request) => {
   const userCookie = request.cookies.nummo_user;
   const pendingCookie = request.cookies.nummo_pending_sub;
 
@@ -303,7 +303,7 @@ app.get('/api/auth/me', async (request, reply) => {
 });
 
 // 6. 로그아웃 API
-app.post('/api/auth/logout', async (request, reply) => {
+app.post('/api/auth/logout', async (_request, reply) => {
   reply.clearCookie('nummo_user', { path: '/' });
   reply.clearCookie('nummo_pending_sub', { path: '/' });
   return { success: true };
@@ -343,7 +343,7 @@ app.get('/api/health', async () => {
 });
 
 // 유저 목록 조회
-app.get('/api/users', async (request, reply) => {
+app.get('/api/users', async (_request, reply) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query<RowDataPacket[]>(
