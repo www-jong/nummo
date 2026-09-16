@@ -61,6 +61,7 @@ export default function App() {
           setUserName(data.nickname);
           localStorage.setItem('nummo_user', data.nickname);
           setIsNicknameModalOpen(false);
+          setPracticeHistoryRefresh((prev) => prev + 1);
         } else if (data.needsNickname) {
           setIsNicknameModalOpen(true);
         } else {
@@ -77,16 +78,15 @@ export default function App() {
       });
   }, []);
 
-  // 로그아웃 처리
+  // 로그아웃 처리 (서버 세션 해제 및 클린 페이지 이동)
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     } catch (e) {
       console.error('Logout error:', e);
     }
-    setIsLoggedIn(false);
-    setUserName('게스트');
     localStorage.removeItem('nummo_user');
+    window.location.href = '/';
   };
 
   // 닉네임 등록 성공
@@ -95,6 +95,7 @@ export default function App() {
     setIsLoggedIn(true);
     setUserName(newNickname);
     localStorage.setItem('nummo_user', newNickname);
+    setPracticeHistoryRefresh((prev) => prev + 1);
   };
 
   // 닉네임 변경 성공

@@ -95,8 +95,8 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ limit: '30' });
-      // 랭킹 탭에서는 전체 순위를 조회하므로 user 필터 제외, 최근 기록 탭에서는 내 기록 중심
-      if (viewTab === 'LATEST' && currentUser) {
+      // 랭킹 탭에서는 전체 순위를 조회하므로 user 필터 제외, 최근 기록 탭에서는 로그인 유저일 때만 내 기록 중심
+      if (viewTab === 'LATEST' && isLoggedIn && currentUser) {
         params.set('user', currentUser);
       }
       if (viewTab === 'RANKING') {
@@ -119,7 +119,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
     } finally {
       if (!signal?.aborted) setIsLoading(false);
     }
-  }, [currentUser, viewTab, filterHand, filterMode]);
+  }, [currentUser, isLoggedIn, viewTab, filterHand, filterMode]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -320,7 +320,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
               }`}
             >
               <span>⏱</span>
-              <span>최근 기록</span>
+              <span>{isLoggedIn ? '내 최근 기록' : '최근 기록'}</span>
             </button>
           </div>
 
@@ -367,7 +367,11 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
         <div className="flex flex-col gap-2 px-1">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] text-neutral-500">
-              {viewTab === 'RANKING' ? '사용자별 최고 기록 기준' : '종목 필터'}
+              {viewTab === 'RANKING'
+                ? '사용자별 최고 기록 기준'
+                : isLoggedIn
+                ? '내 최근 기록 기준'
+                : '전체 최근 기록 기준'}
             </span>
           </div>
           <div className={`grid grid-cols-2 ${viewTab === 'RANKING' ? 'sm:grid-cols-3' : 'sm:grid-cols-4'} gap-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-950 p-1`}>
