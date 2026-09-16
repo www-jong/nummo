@@ -169,4 +169,159 @@ export const practiceRoutes: FastifyPluginAsync = async (app) => {
       conn.release();
     }
   });
+
+  // 내 연습 기록 및 통계 조회 API
+  app.get('/api/practice-sessions/my', {
+    config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 },
+          hand: { type: 'string', enum: ['LEFT', 'RIGHT'] },
+          mode: { type: 'string' },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const { page = 1, limit = 10, hand, mode } = (request.query || {}) as {
+      page?: number;
+      limit?: number;
+      hand?: string;
+      mode?: string;
+    };
+
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(50, Math.max(1, Number(limit) || 10));
+    const offset = (pageNum - 1) * limitNum;
+
+    const pool = getPool();
+    let userId: number | null = null;
+    let anonymousId: string | null = null;
+
+    const nickname = readSignedCookie(request, 'nummo_user');
+    if (nickname) {
+      const [users] = await pool.query<RowDataPacket[]>(
+        'SELECT id FROM users WHERE nickname = ? LIMIT 1',
+        [nickname]
+      );
+      if (users.length > 0) {
+        userId = Number(users[0].id);
+      }
+    }
+    if (!userId) {
+      anonymousId = getAnonymousId(request, reply);
+    }
+
+    try {
+      const condition = userId ? 'ps.user_id = ?' : 'ps.anonymous_id = ?';
+      const idParam = userId ?? anonymousId;
+
+      const extraFilters: string[] = [];
+      const extraParams: any[] = [];
+      if (hand) {
+        extraFilters.push('ps.hand = ?');
+        extraParams.push(hand);
+      }
+      if (mode) {
+        extraFilters.push('ps.mode = ?');
+        extraParams.push(mode);
+      }
+      const filterClause = extraFilters.length > 0 ? `AND ${extraFilters.join(' AND ')}` : '';
+
+      // 1. 통계 요약 (전체 연습 횟수, 평균 KPM, 최고 KPM, 평균 정확도, 총 타건수)
+      const [summaryRows] = await pool.query<RowDataPacket[]>(
+        `SELECT COUNT(*) AS totalSessions,
+                COALESCE(ROUND(AVG(ps.kpm)), 0) AS avgKpm,
+                COALESCE(MAX(ps.kpm), 0) AS bestKpm,
+                COALESCE(ROUND(AVG(ps.accuracy), 1), 0) AS avgAccuracy,
+                COALESCE(SUM(ps.total_keys), 0) AS totalKeys
+         FROM practice_sessions ps
+         WHERE ${condition} ${filterClause}`,
+        [idParam, ...extraParams]
+      );
+
+      // 2. 자주 틀리는 키 TOP 3
+      const [topMistakes] = await pool.query<RowDataPacket[]>(
+        `SELECT psm.target_key AS targetKey, psm.pressed_key AS pressedKey, SUM(psm.mistake_count) AS count
+         FROM practice_session_mistakes psm
+         JOIN practice_sessions ps ON psm.session_id = ps.id
+         WHERE ${condition} ${filterClause}
+         GROUP BY psm.target_key, psm.pressed_key
+         ORDER BY count DESC
+         LIMIT 3`,
+        [idParam, ...extraParams]
+      );
+
+      // 3. 최근 연습 세션 목록 (페이지네이션 적용)
+      const [sessions] = await pool.query<RowDataPacket[]>(
+        `SELECT ps.id, ps.mode, ps.hand, ps.input_behavior AS inputBehavior, ps.problem_count AS problemCount,
+                ps.kpm, ps.accuracy, ps.total_keys AS totalKeys, ps.correct_keys AS correctKeys,
+                ps.wrong_keys AS wrongKeys, ps.duration_seconds AS durationSeconds, ps.created_at AS createdAt
+         FROM practice_sessions ps
+         WHERE ${condition} ${filterClause}
+         ORDER BY ps.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [idParam, ...extraParams, limitNum, offset]
+      );
+
+      // 4. 각 세션별 오타 매핑
+      const sessionIds = sessions.map((s) => s.id);
+      const mistakesMap: Record<number, Array<{ targetKey: string; pressedKey: string; count: number }>> = {};
+
+      if (sessionIds.length > 0) {
+        const [mistakes] = await pool.query<RowDataPacket[]>(
+          `SELECT session_id AS sessionId, target_key AS targetKey, pressed_key AS pressedKey, mistake_count AS count
+           FROM practice_session_mistakes
+           WHERE session_id IN (?)
+           ORDER BY mistake_count DESC`,
+          [sessionIds]
+        );
+        for (const m of mistakes) {
+          if (!mistakesMap[m.sessionId]) mistakesMap[m.sessionId] = [];
+          mistakesMap[m.sessionId].push({
+            targetKey: m.targetKey,
+            pressedKey: m.pressedKey,
+            count: Number(m.count),
+          });
+        }
+      }
+
+      const sessionsWithMistakes = sessions.map((s) => ({
+        ...s,
+        mistakes: mistakesMap[s.id] || [],
+      }));
+
+      const totalCount = Number(summaryRows[0]?.totalSessions || 0);
+      const totalPages = Math.ceil(totalCount / limitNum);
+      const hasMore = pageNum < totalPages;
+
+      return {
+        summary: {
+          totalSessions: totalCount,
+          avgKpm: Number(summaryRows[0]?.avgKpm || 0),
+          bestKpm: Number(summaryRows[0]?.bestKpm || 0),
+          avgAccuracy: Number(summaryRows[0]?.avgAccuracy || 0),
+          totalKeys: Number(summaryRows[0]?.totalKeys || 0),
+          topMistakes: topMistakes.map((m) => ({
+            targetKey: m.targetKey,
+            pressedKey: m.pressedKey,
+            count: Number(m.count),
+          })),
+        },
+        sessions: sessionsWithMistakes,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          totalCount,
+          totalPages,
+          hasMore,
+        },
+      };
+    } catch (err) {
+      app.log.error(err);
+      reply.status(500).send({ error: 'Failed to fetch practice history' });
+    }
+  });
 };

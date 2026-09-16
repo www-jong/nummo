@@ -9,6 +9,7 @@ import { ResultModal } from './components/ResultModal.js';
 import { ConfirmResetModal } from './components/ConfirmResetModal.js';
 import { NicknameModal } from './components/NicknameModal.js';
 import { ChangeNicknameModal } from './components/ChangeNicknameModal.js';
+import { RecentPracticeHistory } from './components/RecentPracticeHistory.js';
 import { useNumpadKeyCapture } from './hooks/useNumpadKeyCapture.js';
 import { PRACTICE_MODES } from './lib/generator.js';
 
@@ -39,6 +40,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState<boolean>(false);
   const [isChangeNicknameModalOpen, setIsChangeNicknameModalOpen] = useState<boolean>(false);
+  const [practiceHistoryRefresh, setPracticeHistoryRefresh] = useState<number>(0);
 
   // 세션 확인 및 구글 로그인 콜백 파라미터 처리
   useEffect(() => {
@@ -221,7 +223,9 @@ export default function App() {
               mistakes: result.mistakes,
             }),
           });
-          if (!res.ok) {
+          if (res.ok) {
+            setPracticeHistoryRefresh((prev) => prev + 1);
+          } else {
             console.error('Failed to save practice session:', res.status);
           }
         } catch (err) {
@@ -382,6 +386,7 @@ export default function App() {
                   onStart={startPracticeSession}
                   isVisible={true}
                 />
+                <RecentPracticeHistory refreshTrigger={practiceHistoryRefresh} />
               </div>
             )}
           </div>
@@ -401,6 +406,7 @@ export default function App() {
           setIsResultModalOpen(false);
           setViewPhase('CONFIG');
           setResetTrigger((prev) => prev + 1);
+          setPracticeHistoryRefresh((prev) => prev + 1);
         }}
       />
 
