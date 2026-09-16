@@ -39,7 +39,7 @@ await app.register(helmet, {
 });
 
 await app.register(rateLimit, {
-  max: 120,
+  max: 600,
   timeWindow: '1 minute',
 });
 
@@ -54,6 +54,18 @@ const distPath = fs.existsSync(path.resolve(__dirname, '../dist'))
 await app.register(fastifyStatic, {
   root: distPath,
   prefix: '/',
+  setHeaders: (res, pathName) => {
+    // 해시가 포함된 번들 자산(/assets/*)은 1년 장기 immutable 캐시 적용 (F5 새로고침 시 304 요청 원천 차단)
+    if (pathName.includes('/assets/') || pathName.includes('\\assets\\')) {
+      res.header('Cache-Control', 'public, max-age=31536000, immutable');
+    } else if (pathName.endsWith('.html')) {
+      // index.html은 새 버전 배포 즉시 감지되도록 must-revalidate 적용
+      res.header('Cache-Control', 'public, max-age=0, must-revalidate');
+    } else {
+      // 파비콘, manifest 등 정적 리소스는 1일 캐시 적용
+      res.header('Cache-Control', 'public, max-age=86400');
+    }
+  },
 });
 
 // 3. 도메인별 라우트 등록

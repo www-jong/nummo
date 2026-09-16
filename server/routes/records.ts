@@ -119,7 +119,7 @@ export const recordsRoutes: FastifyPluginAsync = async (app) => {
   // 기록 조회 (유저별, 모드별, 손별, 정렬별)
   app.get('/api/records', {
     preHandler: [refreshCooldownHook],
-    config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
+    config: { rateLimit: { max: 120, timeWindow: '1 minute' } },
     schema: {
       querystring: {
         type: 'object',
@@ -224,7 +224,7 @@ export const recordsRoutes: FastifyPluginAsync = async (app) => {
 
   // 공식 기록 저장
   app.post('/api/records', {
-    config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+    config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
     schema: {
       body: {
         type: 'object',
