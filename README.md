@@ -1,7 +1,14 @@
 # NUMMO (넘모)
 
-> **넘패드(Numpad) 전문 타건 연습 및 기록 시스템**
-> 왼손/오른손 모드 지원, 실무 수식 특화, 극강의 미니멀 집중 UI, Google OAuth 닉네임 기반 랭킹 서비스.
+<p align="center">
+  <a href="https://nummo.weon.kro.kr">
+    <img src="public/og-image.png" alt="NUMMO - 넘패드 전문 타건 연습" width="100%" />
+  </a>
+</p>
+
+> **넘패드(Numpad) 전문 타건 연습 및 기록 시스템**  
+> 왼손/오른손 모드 지원, 실무 수식 특화, 극강의 미니멀 집중 UI, Google OAuth 닉네임 기반 랭킹 서비스.  
+> **웹 서비스 주소**: [https://nummo.weon.kro.kr](https://nummo.weon.kro.kr)
 
 ---
 
