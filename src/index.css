@@ -9,6 +9,9 @@
   body {
     margin: 0;
     font-feature-settings: "tnum" 1, "zero" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
