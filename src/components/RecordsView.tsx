@@ -478,7 +478,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2 border-t border-neutral-100 dark:border-neutral-800/70 pt-2">
                     <span className="truncate text-[11px] font-medium text-neutral-600 dark:text-neutral-400">{modeLabel}</span>
-                    <span className={`shrink-0 px-1.5 py-0.5 text-[10px] rounded border ${
+                    <span className={`shrink-0 inline-block whitespace-nowrap px-1.5 py-0.5 text-[10px] rounded border ${
                       r.hand === 'LEFT'
                         ? 'bg-sky-500/10 border-sky-500/30 text-sky-600 dark:text-sky-400'
                         : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
@@ -500,7 +500,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
                 {viewTab === 'RANKING' && <th className="py-2.5 px-3 w-14 text-center">순위</th>}
                 <th className="py-2.5 px-3 w-32">날짜 (한국시간)</th>
                 <th className="py-2.5 px-3 w-auto min-w-[110px]">사용자</th>
-                <th className="py-2.5 px-3 w-16 text-center">손</th>
+                <th className="py-2.5 px-3 w-20 text-center">손</th>
                 <th className="py-2.5 px-3 w-28">종목</th>
                 <th className="py-2.5 px-3 w-20 text-right">KPM</th>
                 <th className="py-2.5 px-3 w-20 text-right">정확도</th>
@@ -546,7 +546,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
                         {r.user_name}
                       </td>
                       <td className="py-2.5 px-3 text-center">
-                        <span className={`px-1.5 py-0.5 text-[10px] rounded border ${
+                        <span className={`inline-block whitespace-nowrap px-1.5 py-0.5 text-[10px] rounded border ${
                           r.hand === 'LEFT'
                             ? 'bg-sky-500/10 border-sky-500/30 text-sky-600 dark:text-sky-400'
                             : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'

@@ -258,7 +258,7 @@ export const RecentPracticeHistory: React.FC<RecentPracticeHistoryProps> = ({ re
                       <span className="px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-semibold text-[11px]">
                         {modeName}
                       </span>
-                      <span className="text-[11px] text-neutral-500">
+                      <span className="text-[11px] text-neutral-500 whitespace-nowrap">
                         {s.hand === 'LEFT' ? '왼손' : '오른손'}
                       </span>
                       <span className="text-neutral-300 dark:text-neutral-700">·</span>
