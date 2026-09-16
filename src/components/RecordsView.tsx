@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { RotateCw } from 'lucide-react';
 import { HandType, PracticeCategory, RecordItem } from '../types/index.js';
 
 interface RecordsViewProps {
@@ -6,7 +7,7 @@ interface RecordsViewProps {
   isLoggedIn?: boolean;
   currentHand?: HandType;
   onSelectUser: (user: string) => void;
-  onStartRecordSession: (hand: HandType, mode: PracticeCategory, count: number) => void;
+  onStartRecordSession: (hand: HandType, mode: PracticeCategory) => void;
 }
 
 // 3대 종목 정의 (담백한 용어로 통일)
@@ -80,7 +81,6 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
   // 기록 측정 설정
   const [selectedHand, setSelectedHand] = useState<HandType>(currentHand);
   const [selectedMode, setSelectedMode] = useState<PracticeCategory>('CALC_MIXED');
-  const [selectedCount, setSelectedCount] = useState<number>(20); // 기본 20문항
 
   // 뷰 모드: 전체 순위(RANKING) vs 최근 기록(LATEST)
   const [viewTab, setViewTab] = useState<'RANKING' | 'LATEST'>('RANKING');
@@ -133,6 +133,31 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
   useEffect(() => {
     setNameInput(currentUser);
   }, [currentUser]);
+
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const lastRefreshTimeRef = useRef<number>(0);
+
+  // 수동 새로고침 (2초 쿨다운 및 회전 애니메이션)
+  const handleManualRefresh = async () => {
+    const now = Date.now();
+    if (now - lastRefreshTimeRef.current < 2000 || isRefreshing || isLoading) {
+      return;
+    }
+    lastRefreshTimeRef.current = now;
+    setIsRefreshing(true);
+    const startTime = Date.now();
+    try {
+      await fetchRecords(true);
+    } finally {
+      const elapsed = Date.now() - startTime;
+      const minSpin = 500;
+      if (elapsed < minSpin) {
+        setTimeout(() => setIsRefreshing(false), minSpin - elapsed);
+      } else {
+        setIsRefreshing(false);
+      }
+    }
+  };
 
   const handleApplyUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,44 +284,23 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
           </div>
         </div>
 
-        {/* (3) 문항수 선택 & 시작 버튼 */}
+        {/* (3) 규격 안내 & 시작 버튼 */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-neutral-800/80">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-400">문항수:</span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setSelectedCount(20)}
-                className={`px-3 py-1 text-xs rounded-lg border transition-all ${
-                  selectedCount === 20
-                    ? 'bg-neutral-800 text-amber-300 font-bold border-amber-400/60'
-                    : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                20문항
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedCount(30)}
-                className={`px-3 py-1 text-xs rounded-lg border transition-all ${
-                  selectedCount === 30
-                    ? 'bg-neutral-800 text-amber-300 font-bold border-amber-400/60'
-                    : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                30문항
-              </button>
-            </div>
+            <span className="text-xs text-neutral-400">공식 규격:</span>
+            <span className="px-2.5 py-1 text-xs rounded-lg bg-neutral-800 text-amber-300 font-bold border border-amber-400/40">
+              20문항
+            </span>
           </div>
 
           <button
             type="button"
-            onClick={() => isLoggedIn && onStartRecordSession(selectedHand, selectedMode, selectedCount)}
+            onClick={() => isLoggedIn && onStartRecordSession(selectedHand, selectedMode)}
             disabled={!isLoggedIn}
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs tracking-wider transition-all shadow-xl shadow-amber-400/20 hover:scale-105 active:scale-95 disabled:bg-neutral-800 disabled:text-neutral-500 disabled:shadow-none disabled:hover:scale-100 disabled:cursor-not-allowed"
           >
             {isLoggedIn
-              ? `[${selectedHand === 'LEFT' ? '왼손' : '오른손'} · ${selectedCount}문항] 측정 시작 ▶`
+              ? `[${selectedHand === 'LEFT' ? '왼손' : '오른손'} · 20문항] 측정 시작 ▶`
               : 'Google 로그인 후 측정 가능'}
           </button>
         </div>
@@ -365,10 +369,13 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
 
             <button
               type="button"
-              onClick={() => fetchRecords(true)}
-              className="text-neutral-500 hover:text-neutral-300 text-[11px] underline"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing || isLoading}
+              title={isRefreshing || isLoading ? '새로고침 중...' : '새로고침'}
+              aria-label="새로고침"
+              className="flex items-center justify-center p-1.5 rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-amber-300 hover:border-neutral-700 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              새로고침
+              <RotateCw className={`w-3.5 h-3.5 ${isRefreshing || isLoading ? 'animate-spin text-amber-400' : ''}`} />
             </button>
           </div>
         </div>

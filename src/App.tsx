@@ -215,12 +215,12 @@ export default function App() {
     setResetTrigger((prev) => prev + 1);
   };
 
-  // 기록 모드에서 공식 챌린지 시작
-  const startRecordSession = (selectedHand: HandType, selectedMode: PracticeCategory, selectedCount: number) => {
+  // 기록 모드에서 공식 챌린지 시작 (20문항 고정)
+  const startRecordSession = (selectedHand: HandType, selectedMode: PracticeCategory) => {
     setIsRecordModeActive(true);
     setHand(selectedHand);
     setMode(selectedMode);
-    setProblemCount(selectedCount);
+    setProblemCount(20);
     setViewPhase('TYPING');
     setResetTrigger((prev) => prev + 1);
   };
