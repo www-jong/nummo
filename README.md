@@ -72,11 +72,18 @@ DB_NAME=nummo
 # Server Settings
 PORT=3000
 METRICS_PORT=9464
+COOKIE_SECRET=32자_이상의_무작위_문자열
 
 # Google OAuth 2.0 Credentials
 GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_client_secret
 GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
+```
+
+운영 서버의 `COOKIE_SECRET`은 아래처럼 생성하고 `.env`에만 저장합니다. 값을 변경하면 기존 로그인 세션은 모두 만료됩니다.
+
+```bash
+openssl rand -hex 32
 ```
 
 > **구글 클라우드 콘솔 설정**:
@@ -152,6 +159,23 @@ Loki에서는 Docker Compose가 부여한 `service` 라벨과 JSON 로그를 사
 {service="nummo"} | json | level >= 40
 ```
 
+### 7. Nginx Proxy Manager 보안 설정
+
+NPM 보안 설정은 홈서버에서만 관리하며 저장소에는 포함하지 않습니다.
+전역 rate-limit zone은 `~/server/proxy/data/nginx/custom/http_top.conf`에 설정하고,
+NUMMO 전용 제한은 해당 Proxy Host의 **Advanced** 설정에 입력합니다.
+SSL 탭에서는 Force SSL, HTTP/2 Support, HSTS Enabled를 켭니다.
+
+적용 전후 설정을 검사합니다.
+
+```bash
+cd ~/server/proxy
+docker compose exec npm nginx -t
+docker compose exec npm nginx -s reload
+```
+
+NUMMO 컨테이너의 `3000`과 `9464`는 호스트에 공개하지 않고 `proxy-network` 내부에서만 사용합니다.
+
 ---
 
 ## 🔒 보안 아키텍처
@@ -162,6 +186,10 @@ Loki에서는 Docker Compose가 부여한 `service` 라벨과 JSON 로그를 사
 4. **HTTP 보안 헤더**: `@fastify/helmet` 기반 `X-Frame-Options`, `X-Content-Type-Options` 적용.
 5. **안전한 세션 쿠키**: `httpOnly`, `sameSite: 'lax'` 플래그 적용.
 6. **외부 IP 대응**: 접속 호스트 헤더 기반 OAuth 리디렉션 자동 매칭.
+7. **세션 위조 방지**: `COOKIE_SECRET`으로 로그인·OAuth·익명 방문자 쿠키 서명.
+8. **OAuth 검증**: `state` 기반 CSRF 방어 및 Google ID 토큰의 서명·대상·발급자·만료 검증.
+9. **공식 기록 보호**: 로그인 세션의 닉네임만 서버에서 확정하여 다른 사용자 사칭 차단.
+10. **노출 최소화**: 미등록 경로는 404, 컨테이너 포트는 내부 네트워크에만 공개.
 
 ---
 

@@ -291,10 +291,13 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
 
           <button
             type="button"
-            onClick={() => onStartRecordSession(selectedHand, selectedMode, selectedCount)}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs tracking-wider transition-all shadow-xl shadow-amber-400/20 hover:scale-105 active:scale-95"
+            onClick={() => isLoggedIn && onStartRecordSession(selectedHand, selectedMode, selectedCount)}
+            disabled={!isLoggedIn}
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs tracking-wider transition-all shadow-xl shadow-amber-400/20 hover:scale-105 active:scale-95 disabled:bg-neutral-800 disabled:text-neutral-500 disabled:shadow-none disabled:hover:scale-100 disabled:cursor-not-allowed"
           >
-            [{selectedHand === 'LEFT' ? '왼손' : '오른손'} · {selectedCount}문항] 측정 시작 ▶
+            {isLoggedIn
+              ? `[${selectedHand === 'LEFT' ? '왼손' : '오른손'} · ${selectedCount}문항] 측정 시작 ▶`
+              : 'Google 로그인 후 측정 가능'}
           </button>
         </div>
       </div>

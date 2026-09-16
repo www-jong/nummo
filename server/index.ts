@@ -1,14 +1,14 @@
-import fastify from 'fastify';
-import cors from '@fastify/cors';
+import fastify, { type FastifyRequest } from 'fastify';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
 import fastifyCookie from '@fastify/cookie';
 import path from 'path';
 import fs from 'fs';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { OAuth2Client } from 'google-auth-library';
 import { getPool, testConnection } from './db.js';
 import {
   databaseQueryDurationSeconds,
@@ -27,19 +27,47 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const isProduction = process.env.NODE_ENV === 'production';
+const cookieSecret = process.env.COOKIE_SECRET
+  || (isProduction ? '' : 'nummo-local-development-cookie-secret');
+let useSecureCookies = isProduction;
+
+if (cookieSecret.length < 32) {
+  throw new Error('COOKIE_SECRET must be at least 32 characters');
+}
+
+if (isProduction) {
+  for (const name of [
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
+    'GOOGLE_REDIRECT_URI',
+  ]) {
+    if (!process.env[name]) throw new Error(`${name} is required in production`);
+  }
+  const redirectUri = new URL(process.env.GOOGLE_REDIRECT_URI as string);
+  const isLocalRedirect = ['localhost', '127.0.0.1', '[::1]'].includes(redirectUri.hostname);
+  if (redirectUri.protocol !== 'https:' && !isLocalRedirect) {
+    throw new Error('GOOGLE_REDIRECT_URI must use HTTPS outside localhost');
+  }
+  useSecureCookies = redirectUri.protocol === 'https:';
+}
+
+const googleOAuthClient = new OAuth2Client();
 
 const app = fastify({
   logger: true,
-  trustProxy: true, // Nginx Proxy Manager 등 리버스 프록시 지원
+  trustProxy: ['loopback', 'linklocal', 'uniquelocal'],
+  bodyLimit: 64 * 1024,
 });
 
 // 1. 보안 미들웨어 등록
 await app.register(helmet, {
-  contentSecurityPolicy: false, // Vite 빌드 SPA 인라인 스크립트 허용
-});
-
-await app.register(cors, {
-  origin: true,
+  contentSecurityPolicy: {
+    directives: {
+      frameAncestors: ["'none'"],
+    },
+  },
+  frameguard: { action: 'deny' },
 });
 
 await app.register(rateLimit, {
@@ -47,8 +75,29 @@ await app.register(rateLimit, {
   timeWindow: '1 minute',
 });
 
-await app.register(fastifyCookie);
+await app.register(fastifyCookie, { secret: cookieSecret });
 registerHttpMetrics(app);
+
+const signedCookieOptions = {
+  path: '/',
+  httpOnly: true,
+  sameSite: 'lax' as const,
+  secure: useSecureCookies,
+  signed: true,
+};
+
+function readSignedCookie(request: FastifyRequest, name: string): string | null {
+  const rawValue = request.cookies[name];
+  if (!rawValue) return null;
+  const unsigned = request.unsignCookie(rawValue);
+  return unsigned.valid && unsigned.value ? unsigned.value : null;
+}
+
+function secureValuesMatch(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
 
 // 2. 정적 파일 서빙 (dist/ 서빙)
 const distPath = fs.existsSync(path.resolve(__dirname, '../dist'))
@@ -80,7 +129,9 @@ function getOAuthRedirectUri(request: any): string {
 }
 
 // 1. Google OAuth 로그인 시작 URL로 302 리디렉션
-app.get('/api/auth/google/login', async (request, reply) => {
+app.get('/api/auth/google/login', {
+  config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+}, async (request, reply) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const redirectUri = getOAuthRedirectUri(request);
   oauthEventsTotal.inc({ result: 'started' });
@@ -91,24 +142,41 @@ app.get('/api/auth/google/login', async (request, reply) => {
     return;
   }
 
+  const state = randomBytes(32).toString('base64url');
+  reply.setCookie('nummo_oauth_state', state, {
+    ...signedCookieOptions,
+    maxAge: 60 * 10,
+  });
+
   const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   authUrl.searchParams.set('client_id', clientId);
   authUrl.searchParams.set('redirect_uri', redirectUri);
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('scope', 'openid');
   authUrl.searchParams.set('prompt', 'select_account');
+  authUrl.searchParams.set('state', state);
 
   return reply.redirect(authUrl.toString());
 });
 
 // 2. Google OAuth 콜백 처리
-app.get('/api/auth/google/callback', async (request, reply) => {
-  const { code, error } = request.query as { code?: string; error?: string };
+app.get('/api/auth/google/callback', {
+  config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
+}, async (request, reply) => {
+  const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
   const redirectUri = getOAuthRedirectUri(request);
   request.log.info(
     { event: 'oauth_callback_received', hasCode: Boolean(code), oauthError: error || null, redirectUri },
     'Google OAuth callback received'
   );
+
+  const expectedState = readSignedCookie(request, 'nummo_oauth_state');
+  reply.clearCookie('nummo_oauth_state', { path: '/' });
+  if (!state || !expectedState || !secureValuesMatch(state, expectedState)) {
+    oauthEventsTotal.inc({ result: 'invalid_state' });
+    request.log.warn({ event: 'oauth_invalid_state' }, 'OAuth state validation failed');
+    return reply.redirect('/?login_error=invalid_state');
+  }
 
   if (error || !code) {
     oauthEventsTotal.inc({ result: 'cancelled' });
@@ -146,15 +214,18 @@ app.get('/api/auth/google/callback', async (request, reply) => {
       return reply.redirect('/?login_error=no_id_token');
     }
 
-    // id_token payload 디코딩 (sub: 고유 식별자만 추출, 개인정보 일절 배제)
-    const tokenParts = tokenData.id_token.split('.');
-    if (tokenParts.length < 2) {
+    let googleId: string | undefined;
+    try {
+      const ticket = await googleOAuthClient.verifyIdToken({
+        idToken: tokenData.id_token,
+        audience: clientId,
+      });
+      googleId = ticket.getPayload()?.sub;
+    } catch {
       oauthEventsTotal.inc({ result: 'invalid_id_token' });
+      request.log.warn({ event: 'oauth_invalid_id_token' }, 'Google ID token validation failed');
       return reply.redirect('/?login_error=invalid_token');
     }
-
-    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64url').toString('utf8')) as { sub?: string };
-    const googleId = payload.sub;
 
     if (!googleId) {
       oauthEventsTotal.inc({ result: 'missing_subject' });
@@ -172,10 +243,8 @@ app.get('/api/auth/google/callback', async (request, reply) => {
       // 기존 회원 -> 세션 쿠키 발급 후 메인으로 리디렉트
       const nickname = rows[0].nickname;
       reply.setCookie('nummo_user', nickname, {
-        path: '/',
+        ...signedCookieOptions,
         maxAge: 60 * 60 * 24 * 30, // 30일
-        httpOnly: false, // 프론트엔드 렌더링용
-        sameSite: 'lax',
       });
       oauthEventsTotal.inc({ result: 'success_existing' });
       request.log.info({ event: 'oauth_completed', userType: 'existing' }, 'Google OAuth completed');
@@ -183,10 +252,8 @@ app.get('/api/auth/google/callback', async (request, reply) => {
     } else {
       // 신규 회원 -> 임시 세션 쿠키 발급 후 닉네임 설정 모달 유도
       reply.setCookie('nummo_pending_sub', googleId, {
-        path: '/',
+        ...signedCookieOptions,
         maxAge: 60 * 15, // 15분
-        httpOnly: true,
-        sameSite: 'lax',
       });
       oauthEventsTotal.inc({ result: 'success_new' });
       request.log.info({ event: 'oauth_completed', userType: 'new' }, 'Google OAuth completed');
@@ -200,7 +267,9 @@ app.get('/api/auth/google/callback', async (request, reply) => {
 });
 
 // 3. 닉네임 중복 체크 API
-app.get('/api/auth/check-nickname', async (request, reply) => {
+app.get('/api/auth/check-nickname', {
+  config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+}, async (request, reply) => {
   const { nickname } = request.query as { nickname?: string };
   const trimmed = (nickname || '').trim();
 
@@ -231,8 +300,10 @@ app.get('/api/auth/check-nickname', async (request, reply) => {
 });
 
 // 4. 신규 유저 닉네임 최종 등록 API
-app.post('/api/auth/register-nickname', async (request, reply) => {
-  const googleId = request.cookies.nummo_pending_sub;
+app.post('/api/auth/register-nickname', {
+  config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+}, async (request, reply) => {
+  const googleId = readSignedCookie(request, 'nummo_pending_sub');
 
   if (!googleId) {
     return reply.status(401).send({ error: '구글 로그인 인증 세션이 만료되었습니다. 다시 로그인해주세요.' });
@@ -270,10 +341,8 @@ app.post('/api/auth/register-nickname', async (request, reply) => {
     // 성공 시 임시 쿠키 제거 & 로그인 쿠키 발급
     reply.clearCookie('nummo_pending_sub', { path: '/' });
     reply.setCookie('nummo_user', trimmed, {
-      path: '/',
+      ...signedCookieOptions,
       maxAge: 60 * 60 * 24 * 30, // 30일
-      httpOnly: false,
-      sameSite: 'lax',
     });
 
     return { success: true, nickname: trimmed };
@@ -288,8 +357,8 @@ app.post('/api/auth/register-nickname', async (request, reply) => {
 
 // 5. 현재 로그인 세션 확인 API
 app.get('/api/auth/me', async (request) => {
-  const userCookie = request.cookies.nummo_user;
-  const pendingCookie = request.cookies.nummo_pending_sub;
+  const userCookie = readSignedCookie(request, 'nummo_user');
+  const pendingCookie = readSignedCookie(request, 'nummo_pending_sub');
 
   if (userCookie) {
     return { loggedIn: true, nickname: userCookie, needsNickname: false };
@@ -306,6 +375,7 @@ app.get('/api/auth/me', async (request) => {
 app.post('/api/auth/logout', async (_request, reply) => {
   reply.clearCookie('nummo_user', { path: '/' });
   reply.clearCookie('nummo_pending_sub', { path: '/' });
+  reply.clearCookie('nummo_oauth_state', { path: '/' });
   return { success: true };
 });
 
@@ -375,6 +445,7 @@ const PRACTICE_MODES = [
   'ROW_TOP',
   'NUM_RANDOM',
 ] as const;
+const OFFICIAL_RECORD_MODES = ['CALC_MIXED', 'CALC_BASIC', 'CALC_RECEIPT'] as const;
 
 function getCurrentKstDateTime(): string {
   return new Date(Date.now() + 9 * 60 * 60 * 1000)
@@ -383,19 +454,16 @@ function getCurrentKstDateTime(): string {
     .substring(0, 19);
 }
 
-function getAnonymousId(request: any, reply: any): string {
-  const existingId = request.cookies.nummo_visitor;
+function getAnonymousId(request: FastifyRequest, reply: any): string {
+  const existingId = readSignedCookie(request, 'nummo_visitor');
   const visitorId = typeof existingId === 'string' && /^[0-9a-f-]{36}$/i.test(existingId)
     ? existingId
     : randomUUID();
 
   if (visitorId !== existingId) {
     reply.setCookie('nummo_visitor', visitorId, {
-      path: '/',
+      ...signedCookieOptions,
       maxAge: 60 * 60 * 24 * 365,
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: request.protocol === 'https',
     });
   }
 
@@ -438,6 +506,7 @@ function setCachedRecords(key: string, records: RowDataPacket[], ttlMs: number):
 
 // 기록 조회 (유저별, 모드별, 손별, 정렬별)
 app.get('/api/records', {
+  config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
   schema: {
     querystring: {
       type: 'object',
@@ -535,7 +604,6 @@ app.get('/api/records', {
 
 // 기록 저장
 interface SaveRecordBody {
-  userName: string;
   hand: 'LEFT' | 'RIGHT';
   mode: string;
   kpm: number;
@@ -562,6 +630,7 @@ interface SavePracticeSessionBody {
 }
 
 app.post('/api/practice-sessions', {
+  config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
   schema: {
     body: {
       type: 'object',
@@ -584,10 +653,10 @@ app.post('/api/practice-sessions', {
         problemCount: { type: 'integer', minimum: 1, maximum: 100 },
         kpm: { type: 'integer', minimum: 0, maximum: 3000 },
         accuracy: { type: 'number', minimum: 0, maximum: 100 },
-        totalKeys: { type: 'integer', minimum: 1 },
-        correctKeys: { type: 'integer', minimum: 0 },
-        wrongKeys: { type: 'integer', minimum: 0 },
-        durationSeconds: { type: 'integer', minimum: 1 },
+        totalKeys: { type: 'integer', minimum: 1, maximum: 10000 },
+        correctKeys: { type: 'integer', minimum: 0, maximum: 10000 },
+        wrongKeys: { type: 'integer', minimum: 0, maximum: 10000 },
+        durationSeconds: { type: 'integer', minimum: 1, maximum: 86400 },
         mistakes: {
           type: 'array',
           maxItems: 32,
@@ -606,6 +675,9 @@ app.post('/api/practice-sessions', {
   },
 }, async (request, reply) => {
   const body = request.body as SavePracticeSessionBody;
+  if (body.correctKeys + body.wrongKeys !== body.totalKeys) {
+    return reply.status(400).send({ error: 'Invalid keystroke totals' });
+  }
   const pool = getPool();
   const conn = await pool.getConnection();
   let actorType: 'authenticated' | 'anonymous' = 'anonymous';
@@ -615,7 +687,7 @@ app.post('/api/practice-sessions', {
 
     let userId: number | null = null;
     let anonymousId: string | null = null;
-    const nickname = request.cookies.nummo_user;
+    const nickname = readSignedCookie(request, 'nummo_user');
     if (nickname) {
       const [users] = await conn.query<RowDataPacket[]>(
         'SELECT id FROM users WHERE nickname = ? LIMIT 1',
@@ -687,22 +759,23 @@ app.post('/api/practice-sessions', {
 });
 
 app.post('/api/records', {
+  config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
   schema: {
     body: {
       type: 'object',
-      required: ['userName', 'hand', 'mode', 'kpm', 'accuracy', 'totalKeys', 'correctKeys', 'wrongKeys', 'durationSeconds'],
+      required: ['hand', 'mode', 'kpm', 'accuracy', 'totalKeys', 'correctKeys', 'wrongKeys', 'durationSeconds'],
       properties: {
-        userName: { type: 'string', minLength: 1, maxLength: 50 },
         hand: { type: 'string', enum: ['LEFT', 'RIGHT'] },
-        mode: { type: 'string', minLength: 1, maxLength: 50 },
+        mode: { type: 'string', enum: OFFICIAL_RECORD_MODES },
         kpm: { type: 'integer', minimum: 0, maximum: 3000 },
         accuracy: { type: 'number', minimum: 0, maximum: 100 },
-        totalKeys: { type: 'integer', minimum: 1 },
-        correctKeys: { type: 'integer', minimum: 0 },
-        wrongKeys: { type: 'integer', minimum: 0 },
-        durationSeconds: { type: 'integer', minimum: 1 },
+        totalKeys: { type: 'integer', minimum: 1, maximum: 10000 },
+        correctKeys: { type: 'integer', minimum: 0, maximum: 10000 },
+        wrongKeys: { type: 'integer', minimum: 0, maximum: 10000 },
+        durationSeconds: { type: 'integer', minimum: 1, maximum: 86400 },
         mistakes: {
           type: 'array',
+          maxItems: 32,
           items: {
             type: 'object',
             required: ['targetKey', 'pressedKey', 'count'],
@@ -718,6 +791,14 @@ app.post('/api/records', {
   },
 }, async (request, reply) => {
   const body = request.body as SaveRecordBody;
+  const authenticatedNickname = readSignedCookie(request, 'nummo_user');
+  if (!authenticatedNickname) {
+    officialRecordsSavedTotal.inc({ result: 'unauthorized', mode: body.mode, hand: body.hand });
+    return reply.status(401).send({ error: 'Google login is required' });
+  }
+  if (body.correctKeys + body.wrongKeys !== body.totalKeys) {
+    return reply.status(400).send({ error: 'Invalid keystroke totals' });
+  }
   const pool = getPool();
   const conn = await pool.getConnection();
 
@@ -731,7 +812,7 @@ app.post('/api/records', {
       `INSERT INTO records (user_name, hand, mode, kpm, accuracy, total_keys, correct_keys, wrong_keys, duration_seconds, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        body.userName.trim(),
+        authenticatedNickname,
         body.hand,
         body.mode,
         body.kpm,
@@ -771,13 +852,8 @@ app.post('/api/records', {
   }
 });
 
-// SPA fallback: 모든 경로를 index.html로 라우팅
-app.setNotFoundHandler((request, reply) => {
-  if (request.raw.url && request.raw.url.startsWith('/api')) {
-    reply.status(404).send({ error: 'Not Found' });
-  } else {
-    reply.sendFile('index.html');
-  }
+app.setNotFoundHandler((_request, reply) => {
+  reply.status(404).send({ error: 'Not Found' });
 });
 
 const port = Number(process.env.PORT) || 3001;

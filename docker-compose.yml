@@ -5,9 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: nummo
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     expose:
+      - "3000"
       - "9464"
     env_file:
       - .env
