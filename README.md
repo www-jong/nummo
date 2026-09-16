@@ -1,4 +1,4 @@
-# NUMMO (넘모)
+# NUMMO (Numpad More)
 
 <p align="center">
   <a href="https://nummo.weon.kro.kr">
@@ -7,14 +7,14 @@
 </p>
 
 > **넘패드(Numpad) 전문 타건 연습 및 기록 시스템**  
-> 왼손/오른손 모드 지원, 실무 수식 특화, 극강의 미니멀 집중 UI, Google OAuth 닉네임 기반 랭킹 서비스.  
+> 왼손/오른손 모드 지원,  수식 특화, 미니멀 집중 UI, Google OAuth 닉네임 기반 랭킹 서비스.  
 > **웹 서비스 주소**: [https://nummo.weon.kro.kr](https://nummo.weon.kro.kr)
 
 ---
 
 ## 📌 주요 특징
 
-- **왼손 / 오른손 모드 완벽 지원**: 왼손잡이 및 왼손 넘패드 사용자를 위한 전용 키 배치와 운지 가이드 제공.
+- **왼손 / 오른손 모드 완벽 지원**: 왼손잡이 및 왼손 넘패드 사용자를 위한 전용 키 배치와 파지 가이드 제공.
 - **물리 키 캡처 엔진**: W3C 표준 `event.code` 기반으로 OS(Mac, Windows, Linux) 및 NumLock 상태와 무관하게 100% 정확한 넘패드 물리 입력 캡처.
 - **실전 특화 수식 제너레이터**:
   - **소수점 사칙연산 (표준)**: 소수점과 사칙연산이 조합된 복합 계산식 (`15.5*4+250.25-18.5=`)
@@ -165,23 +165,6 @@ Loki에서는 Docker Compose가 부여한 `service` 라벨과 JSON 로그를 사
 {service="nummo"} | json
 {service="nummo"} | json | level >= 40
 ```
-
-### 7. Nginx Proxy Manager 보안 설정
-
-NPM 보안 설정은 홈서버에서만 관리하며 저장소에는 포함하지 않습니다.
-전역 rate-limit zone은 `~/server/proxy/data/nginx/custom/http_top.conf`에 설정하고,
-NUMMO 전용 제한은 해당 Proxy Host의 **Advanced** 설정에 입력합니다.
-SSL 탭에서는 Force SSL, HTTP/2 Support, HSTS Enabled를 켭니다.
-
-적용 전후 설정을 검사합니다.
-
-```bash
-cd ~/server/proxy
-docker compose exec npm nginx -t
-docker compose exec npm nginx -s reload
-```
-
-NUMMO 컨테이너의 `3000`과 `9464`는 호스트에 공개하지 않고 `proxy-network` 내부에서만 사용합니다.
 
 ---
 
