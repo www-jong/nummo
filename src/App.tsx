@@ -124,11 +124,6 @@ export default function App() {
   const [isResultModalOpen, setIsResultModalOpen] = useState<boolean>(false);
   const [isSavedToDb, setIsSavedToDb] = useState<boolean>(false);
 
-  // 사용자명 변경 저장 (미로그인 시)
-  const handleSelectUser = (name: string) => {
-    setUserName(name);
-    localStorage.setItem('nummo_user', name);
-  };
 
   // 키보드 캡처 (모달 열려있거나 일시정지 중이면 비활성화)
   const isModalOpen = pendingAction !== null || isResultModalOpen || isNicknameModalOpen;
@@ -369,7 +364,6 @@ export default function App() {
                 currentUser={userName}
                 isLoggedIn={isLoggedIn}
                 currentHand={hand}
-                onSelectUser={handleSelectUser}
                 onStartRecordSession={startRecordSession}
               />
             ) : (

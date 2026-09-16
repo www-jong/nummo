@@ -272,7 +272,10 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
           className="w-full sm:w-auto px-8 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-sm tracking-wider transition-all shadow-xl shadow-amber-400/20 active:scale-95 flex items-center justify-center gap-2"
         >
           <span>연습 시작</span>
-          <span className="text-[10px] text-neutral-800 font-normal">↵</span>
+          <kbd className="px-1.5 py-0.5 text-xs font-mono font-bold bg-neutral-950/15 border border-neutral-950/25 rounded-md flex items-center gap-1 shadow-sm">
+            <span className="text-sm leading-none">↵</span>
+            <span className="text-[10px] uppercase">Enter</span>
+          </kbd>
         </button>
       </div>
     </div>

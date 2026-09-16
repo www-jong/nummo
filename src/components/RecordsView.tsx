@@ -6,7 +6,6 @@ interface RecordsViewProps {
   currentUser: string;
   isLoggedIn?: boolean;
   currentHand?: HandType;
-  onSelectUser: (user: string) => void;
   onStartRecordSession: (hand: HandType, mode: PracticeCategory) => void;
 }
 
@@ -75,7 +74,6 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
   currentUser,
   isLoggedIn = false,
   currentHand = 'RIGHT',
-  onSelectUser,
   onStartRecordSession,
 }) => {
   // 기록 측정 설정
@@ -90,7 +88,6 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
   const [filterMode, setFilterMode] = useState<'ALL' | PracticeCategory>('CALC_MIXED');
 
   const [records, setRecords] = useState<RecordItem[]>([]);
-  const [nameInput, setNameInput] = useState<string>(currentUser);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // 기록/순위 불러오기
@@ -130,10 +127,6 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
     return () => controller.abort();
   }, [fetchRecords]);
 
-  useEffect(() => {
-    setNameInput(currentUser);
-  }, [currentUser]);
-
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const lastRefreshTimeRef = useRef<number>(0);
 
@@ -159,50 +152,40 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
     }
   };
 
-  const handleApplyUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (nameInput.trim()) {
-      onSelectUser(nameInput.trim());
-    }
-  };
-
   return (
     <div className="w-full max-w-2xl flex flex-col items-center gap-4 sm:gap-6 px-0 py-2 sm:p-6 font-mono animate-fade-in transition-colors">
       {/* 1. 사용자 계정 카드 */}
       <div className="w-full p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-sm dark:shadow-xl">
         <div className="min-w-0 flex flex-wrap items-center gap-2 sm:gap-3">
           <span className="text-xs text-neutral-500 dark:text-neutral-400">기록자</span>
-          <span className="max-w-full truncate text-base font-bold text-amber-600 dark:text-amber-400">
-            {currentUser || '게스트'}
-          </span>
           {isLoggedIn ? (
-            <span className="px-2 py-0.5 text-[10px] rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold">
-              인증됨
-            </span>
+            <>
+              <span className="max-w-full truncate text-base font-bold text-amber-600 dark:text-amber-400">
+                {currentUser}
+              </span>
+              <span className="px-2 py-0.5 text-[10px] rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold">
+                인증됨
+              </span>
+            </>
           ) : (
-            <span className="basis-full sm:basis-auto text-[11px] text-neutral-500">
-              (로그인 시 고유 닉네임으로 저장)
-            </span>
+            <>
+              <span className="text-base font-bold text-neutral-500 dark:text-neutral-400">
+                게스트
+              </span>
+              <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                (공식 기록 측정은 로그인 후 가능)
+              </span>
+            </>
           )}
         </div>
 
         {!isLoggedIn && (
-          <form onSubmit={handleApplyUser} className="w-full sm:w-auto flex items-center gap-2">
-            <input
-              type="text"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              placeholder="임시 닉네임"
-              maxLength={20}
-              className="min-w-0 flex-1 sm:flex-none px-2.5 py-2 sm:py-1 text-xs rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 sm:w-32"
-            />
-            <button
-              type="submit"
-              className="min-h-9 px-3 sm:px-2.5 py-1 text-xs font-semibold rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 border border-neutral-300 dark:border-neutral-700 transition-colors"
-            >
-              변경
-            </button>
-          </form>
+          <a
+            href="/api/auth/google"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 shadow-sm transition-colors"
+          >
+            Google 로그인
+          </a>
         )}
       </div>
 
