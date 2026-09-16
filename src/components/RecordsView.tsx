@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { RotateCw } from 'lucide-react';
+import { RotateCw, AlertCircle } from 'lucide-react';
 import { HandType, PracticeCategory, RecordItem } from '../types/index.js';
+import { getClientCache, setClientCache } from '../lib/clientCache.js';
 
 interface RecordsViewProps {
   currentUser: string;
@@ -89,9 +90,23 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
 
   const [records, setRecords] = useState<RecordItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
-  // 기록/순위 불러오기
+  // 기록/순위 불러오기 (15초 TTL 클라이언트 캐시 장착)
   const fetchRecords = useCallback(async (forceRefresh = false, signal?: AbortSignal) => {
+    const cacheKey = `nummo_records_${viewTab}_${filterHand}_${filterMode}_${isLoggedIn ? currentUser : 'guest'}`;
+
+    // 15초 이내 캐시가 유효하고 강제 새로고침이 아니면 캐시 즉시 렌더링 (서버 요청 0)
+    if (!forceRefresh) {
+      const cached = getClientCache<RecordItem[]>(cacheKey, 15000);
+      if (cached) {
+        setRecords(cached);
+        setErrorBanner(null);
+        setIsLoading(false);
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ limit: '30' });
@@ -111,11 +126,28 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
       const res = await fetch(`/api/records?${params.toString()}`, { signal });
       if (res.ok) {
         const data = await res.json();
-        if (!signal?.aborted) setRecords(data);
+        if (!signal?.aborted) {
+          setRecords(data);
+          setClientCache(cacheKey, data);
+          setErrorBanner(null);
+        }
+      } else if (res.status === 429) {
+        const errJson = await res.json().catch(() => null);
+        const msg = errJson?.message || '요청이 너무 빠릅니다. 잠시 후 다시 시도해주세요.';
+        if (!signal?.aborted) {
+          setErrorBanner(msg);
+        }
+      } else {
+        if (!signal?.aborted) {
+          setErrorBanner('기록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+        }
       }
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return;
       console.error('Failed to fetch records:', e);
+      if (!signal?.aborted) {
+        setErrorBanner('네트워크 오류가 발생했습니다.');
+      }
     } finally {
       if (!signal?.aborted) setIsLoading(false);
     }
@@ -404,6 +436,23 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
             ))}
           </div>
         </div>
+
+        {/* 에러 및 429 안내 배너 */}
+        {errorBanner && (
+          <div className="w-full p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs flex items-center justify-between gap-2 shadow-sm animate-fade-in">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+              <span className="truncate">{errorBanner}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleManualRefresh()}
+              className="shrink-0 px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-[11px] transition-colors"
+            >
+              다시 시도
+            </button>
+          </div>
+        )}
 
         {/* 모바일 기록 카드 */}
         <div className="md:hidden w-full flex flex-col gap-2">

@@ -3,6 +3,7 @@ import { RotateCw, History, AlertCircle, ChevronDown, ChevronUp } from 'lucide-r
 import { PRACTICE_MODES } from '../lib/generator.js';
 import { usePrefetchPagination } from '../hooks/usePrefetchPagination.js';
 import { LoadMoreButton } from './common/LoadMoreButton.js';
+import { getClientCache, setClientCache, clearClientCache } from '../lib/clientCache.js';
 
 interface PracticeSessionItem {
   id: number;
@@ -56,16 +57,49 @@ function formatKST(dateStr: string): string {
 export const RecentPracticeHistory: React.FC<RecentPracticeHistoryProps> = ({ refreshTrigger }) => {
   const [summary, setSummary] = useState<PracticeHistorySummary | null>(null);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
-  // 페이지별 데이터 로더 (1페이지 로드 시 요약 통계도 함께 보관)
+  // 페이지별 데이터 로더 (1페이지 로드 시 15초 캐시 및 요약 통계 보관)
   const fetchPage = useCallback(async (page: number, signal?: AbortSignal) => {
+    const cacheKey = `nummo_practice_p${page}`;
+    if (page === 1) {
+      const cached = getClientCache<{
+        summary: PracticeHistorySummary;
+        items: PracticeSessionItem[];
+        hasMore: boolean;
+        totalCount: number;
+      }>(cacheKey, 15000);
+
+      if (cached) {
+        setSummary(cached.summary);
+        setErrorBanner(null);
+        return {
+          items: cached.items,
+          hasMore: cached.hasMore,
+          totalCount: cached.totalCount,
+        };
+      }
+    }
+
     const res = await fetch(`/api/practice-sessions/my?page=${page}&limit=10`, { signal });
     if (!res.ok) {
+      if (res.status === 429) {
+        const errJson = await res.json().catch(() => null);
+        const msg = errJson?.message || '요청이 너무 빠릅니다. 잠시 후 다시 시도해주세요.';
+        setErrorBanner(msg);
+      }
       throw new Error(`Failed to fetch practice history: ${res.status}`);
     }
     const data = await res.json();
+    setErrorBanner(null);
     if (page === 1 && data.summary) {
       setSummary(data.summary);
+      setClientCache(cacheKey, {
+        summary: data.summary,
+        items: (data.sessions || []) as PracticeSessionItem[],
+        hasMore: Boolean(data.pagination?.hasMore),
+        totalCount: Number(data.pagination?.totalCount || 0),
+      });
     }
     return {
       items: (data.sessions || []) as PracticeSessionItem[],
@@ -89,7 +123,12 @@ export const RecentPracticeHistory: React.FC<RecentPracticeHistoryProps> = ({ re
     refreshTrigger,
   });
 
-  if (!summary && sessions.length === 0 && !isLoading) {
+  const handleManualRefresh = () => {
+    clearClientCache('nummo_practice_');
+    refresh();
+  };
+
+  if (!summary && sessions.length === 0 && !isLoading && !errorBanner) {
     return null;
   }
 
@@ -112,7 +151,7 @@ export const RecentPracticeHistory: React.FC<RecentPracticeHistoryProps> = ({ re
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={refresh}
+            onClick={handleManualRefresh}
             disabled={isLoading}
             title="새로고침"
             className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all disabled:opacity-40"
@@ -129,6 +168,23 @@ export const RecentPracticeHistory: React.FC<RecentPracticeHistoryProps> = ({ re
           </button>
         </div>
       </div>
+
+      {/* 에러 및 429 안내 배너 */}
+      {errorBanner && (
+        <div className="mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs flex items-center justify-between gap-2 shadow-sm animate-fade-in">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span className="truncate">{errorBanner}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            className="shrink-0 px-2 py-0.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-[10px] transition-colors"
+          >
+            다시 시도
+          </button>
+        </div>
+      )}
 
       {!isCollapsed && (
         <div className="mt-3 flex flex-col gap-3.5 animate-fade-in">

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { HandType, PracticeCategory, InputBehavior, SessionResult } from './types/index.js';
 import { Navbar, MainTab } from './components/Navbar.js';
 import { PracticeConfigBar } from './components/PracticeConfigBar.js';
+import { clearClientCache } from './lib/clientCache.js';
 import { TypingArena } from './components/TypingArena.js';
 import { NumpadVisualizer } from './components/NumpadVisualizer.js';
 import { RecordsView } from './components/RecordsView.js';
@@ -85,6 +86,7 @@ export default function App() {
     } catch (e) {
       console.error('Logout error:', e);
     }
+    clearClientCache();
     localStorage.removeItem('nummo_user');
     window.location.href = '/';
   };
@@ -95,6 +97,7 @@ export default function App() {
     setIsLoggedIn(true);
     setUserName(newNickname);
     localStorage.setItem('nummo_user', newNickname);
+    clearClientCache('nummo_records_');
     setPracticeHistoryRefresh((prev) => prev + 1);
   };
 
@@ -102,6 +105,7 @@ export default function App() {
   const handleChangeNicknameSuccess = (newNickname: string) => {
     setUserName(newNickname);
     localStorage.setItem('nummo_user', newNickname);
+    clearClientCache('nummo_records_');
   };
 
   // 연습 설정
@@ -195,6 +199,7 @@ export default function App() {
           });
           if (res.ok) {
             setIsSavedToDb(true);
+            clearClientCache('nummo_records_');
           }
         } catch (err) {
           console.error('Failed to save record to MySQL:', err);
@@ -220,6 +225,7 @@ export default function App() {
             }),
           });
           if (res.ok) {
+            clearClientCache('nummo_practice_');
             setPracticeHistoryRefresh((prev) => prev + 1);
           } else {
             console.error('Failed to save practice session:', res.status);
