@@ -28,8 +28,15 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           </span>
           <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mt-0.5">결과 요약</h2>
           {isRecordMode && (
-            <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-medium">
-              {isSaved ? '✓ 기록 저장 완료' : '저장 중...'}
+            <div className="mt-1.5 flex flex-col items-center gap-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-medium">
+                {isSaved ? '✓ 기록 저장 완료' : '저장 중...'}
+              </div>
+              {isSaved && result.accuracy < 90 && (
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                  ※ 정확도 90% 미만으로 주간 랭킹 집계에서는 제외됩니다.
+                </span>
+              )}
             </div>
           )}
         </div>

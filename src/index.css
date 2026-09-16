@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
   body {
     margin: 0;
     font-feature-settings: "tnum" 1, "zero" 1;

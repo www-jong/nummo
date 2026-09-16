@@ -172,6 +172,17 @@ export const recordsRoutes: FastifyPluginAsync = async (app) => {
         params.push(mode);
       }
 
+      if (sort === 'ranking') {
+        // 주간 랭킹 기준: 정확도 90% 이상 & 최근 일주일(7일) 집계
+        filters.push('r.accuracy >= 90');
+        const sevenDaysAgoKst = new Date(Date.now() + 9 * 60 * 60 * 1000 - 7 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .replace('T', ' ')
+          .substring(0, 19);
+        filters.push('r.created_at >= ?');
+        params.push(sevenDaysAgoKst);
+      }
+
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
       let query: string;
       if (sort === 'ranking') {

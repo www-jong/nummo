@@ -400,7 +400,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] text-neutral-500">
               {viewTab === 'RANKING'
-                ? '사용자별 최고 기록 기준'
+                ? '사용자별 최고 기록 기준 (정확도 90% 이상, 최근 일주일 집계)'
                 : isLoggedIn
                 ? '내 최근 기록 기준'
                 : '전체 최근 기록 기준'}
@@ -455,13 +455,13 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
         )}
 
         {/* 모바일 기록 카드 */}
-        <div className="md:hidden w-full flex flex-col gap-2">
+        <div className="md:hidden w-full flex flex-col gap-2 min-h-[280px]">
           {isLoading ? (
-            <div className="py-8 text-center text-neutral-500 text-xs rounded-2xl border border-neutral-200 dark:border-neutral-800/80 bg-white dark:bg-neutral-900/50 shadow-sm">
+            <div className="py-16 text-center text-neutral-500 text-xs rounded-2xl border border-neutral-200 dark:border-neutral-800/80 bg-white dark:bg-neutral-900/50 shadow-sm flex items-center justify-center">
               불러오는 중...
             </div>
           ) : records.length === 0 ? (
-            <div className="py-8 text-center text-neutral-500 text-xs rounded-2xl border border-neutral-200 dark:border-neutral-800/80 bg-white dark:bg-neutral-900/50 shadow-sm">
+            <div className="py-16 text-center text-neutral-500 text-xs rounded-2xl border border-neutral-200 dark:border-neutral-800/80 bg-white dark:bg-neutral-900/50 shadow-sm flex items-center justify-center">
               해당 조건의 기록이 없습니다.
             </div>
           ) : (
@@ -504,29 +504,29 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
         </div>
 
         {/* 태블릿/PC 기록 테이블 */}
-        <div className="hidden md:block w-full overflow-x-auto rounded-2xl border border-neutral-200 dark:border-neutral-800/80 bg-white dark:bg-neutral-900/50 shadow-sm">
-          <table className="w-full text-left text-xs">
+        <div className="hidden md:block w-full overflow-x-auto rounded-2xl border border-neutral-200 dark:border-neutral-800/80 bg-white dark:bg-neutral-900/50 shadow-sm min-h-[320px]">
+          <table className="w-full text-left text-xs table-fixed">
             <thead className="text-[11px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950/40">
               <tr>
                 {viewTab === 'RANKING' && <th className="py-2.5 px-3 w-14 text-center">순위</th>}
-                <th className="py-2.5 px-3">날짜 (한국시간)</th>
-                <th className="py-2.5 px-3">사용자</th>
-                <th className="py-2.5 px-3">손</th>
-                <th className="py-2.5 px-3">종목</th>
-                <th className="py-2.5 px-3 text-right">KPM</th>
-                <th className="py-2.5 px-3 text-right">정확도</th>
+                <th className="py-2.5 px-3 w-32">날짜 (한국시간)</th>
+                <th className="py-2.5 px-3 w-auto min-w-[110px]">사용자</th>
+                <th className="py-2.5 px-3 w-16 text-center">손</th>
+                <th className="py-2.5 px-3 w-28">종목</th>
+                <th className="py-2.5 px-3 w-20 text-right">KPM</th>
+                <th className="py-2.5 px-3 w-20 text-right">정확도</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800/60 text-neutral-700 dark:text-neutral-300">
               {isLoading ? (
                 <tr>
-                  <td colSpan={viewTab === 'RANKING' ? 7 : 6} className="py-6 text-center text-neutral-500 text-xs">
+                  <td colSpan={viewTab === 'RANKING' ? 7 : 6} className="py-16 text-center text-neutral-500 text-xs">
                     불러오는 중...
                   </td>
                 </tr>
               ) : records.length === 0 ? (
                 <tr>
-                  <td colSpan={viewTab === 'RANKING' ? 7 : 6} className="py-6 text-center text-neutral-500 text-xs">
+                  <td colSpan={viewTab === 'RANKING' ? 7 : 6} className="py-16 text-center text-neutral-500 text-xs">
                     해당 조건의 기록이 없습니다.
                   </td>
                 </tr>
@@ -550,13 +550,13 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
                           )}
                         </td>
                       )}
-                      <td className="py-2.5 px-3 text-neutral-500 text-[11px]">
+                      <td className="py-2.5 px-3 text-neutral-500 text-[11px] truncate">
                         {formatKST(r.created_at)}
                       </td>
-                      <td className="py-2.5 px-3 font-medium text-neutral-900 dark:text-neutral-200">
+                      <td className="py-2.5 px-3 font-medium text-neutral-900 dark:text-neutral-200 truncate" title={r.user_name}>
                         {r.user_name}
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 text-center">
                         <span className={`px-1.5 py-0.5 text-[10px] rounded border ${
                           r.hand === 'LEFT'
                             ? 'bg-sky-500/10 border-sky-500/30 text-sky-600 dark:text-sky-400'
@@ -565,7 +565,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
                           {r.hand === 'LEFT' ? '왼손' : '오른손'}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-neutral-700 dark:text-neutral-300 text-[11px] font-medium">{modeLabel}</td>
+                      <td className="py-2.5 px-3 text-neutral-700 dark:text-neutral-300 text-[11px] font-medium truncate" title={modeLabel}>{modeLabel}</td>
                       <td className="py-2.5 px-3 text-right font-bold text-amber-600 dark:text-amber-400">{r.kpm}</td>
                       <td className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400 font-semibold">
                         {r.accuracy}%
