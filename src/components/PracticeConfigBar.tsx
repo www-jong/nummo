@@ -39,7 +39,7 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
   const selectedModeMeta = PRACTICE_MODES.find((m) => m.id === mode) || PRACTICE_MODES[0];
 
   return (
-    <div className="w-full max-w-2xl flex flex-col gap-4 sm:gap-5 p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-800 shadow-xl dark:shadow-2xl backdrop-blur-md font-mono animate-fade-in select-none transition-colors">
+    <div className="w-full max-w-4xl flex flex-col gap-4 sm:gap-5 p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-800 shadow-xl dark:shadow-2xl backdrop-blur-md font-mono animate-fade-in select-none transition-colors">
       {/* 타이틀 및 헤더 */}
       <div className="flex flex-wrap items-start justify-between gap-2 border-b border-neutral-200 dark:border-neutral-800/80 pb-3.5">
         <div>

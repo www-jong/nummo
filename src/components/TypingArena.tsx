@@ -227,7 +227,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
     totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 1000) / 10 : 100;
 
   return (
-    <div className="flex flex-col items-center w-full max-w-xl">
+    <div className="w-full max-w-xl sm:max-w-2xl flex flex-col items-center gap-2 select-none">
       {/* 상태 바 */}
       <div className="flex items-center justify-between gap-2 w-full px-1 sm:px-4 mb-2 sm:mb-3 text-xs font-mono text-neutral-500 dark:text-neutral-400">
         <div className="flex items-center gap-3 sm:gap-5">

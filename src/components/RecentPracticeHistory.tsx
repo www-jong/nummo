@@ -129,7 +129,7 @@ export const RecentPracticeHistory: React.FC<RecentPracticeHistoryProps> = ({ re
   }
 
   return (
-    <div className="w-full max-w-2xl bg-white dark:bg-[#18181b] border border-neutral-200 dark:border-neutral-800 rounded-2xl p-3.5 sm:p-5 font-mono shadow-sm transition-colors">
+    <div className="w-full max-w-4xl bg-white dark:bg-[#18181b] border border-neutral-200 dark:border-neutral-800 rounded-2xl p-3.5 sm:p-5 font-mono shadow-sm transition-colors">
       {/* 헤더 */}
       <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-neutral-100 dark:border-neutral-800">
         <div className="flex items-center gap-2">

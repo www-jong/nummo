@@ -291,7 +291,7 @@ export default function App() {
             )}
 
             {/* 상단 현재 선택된 설정 요약 뱃지 바 */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 w-full max-w-xl px-1 sm:px-2 py-1 text-xs font-mono">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 w-full max-w-xl sm:max-w-2xl px-1 sm:px-2 py-1 text-xs font-mono">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="px-2 py-0.5 rounded-md bg-neutral-900/90 border border-neutral-800 text-amber-300 font-bold text-[11px]">
                   {PRACTICE_MODES.find((m) => m.id === mode)?.name || mode}
@@ -377,7 +377,7 @@ export default function App() {
                 refreshTrigger={recordsRefreshTrigger}
               />
             ) : (
-              <div className="flex flex-col items-center gap-4 w-full max-w-2xl">
+              <div className="flex flex-col items-center gap-4 w-full max-w-4xl">
                 <PracticeConfigBar
                   hand={hand}
                   onChangeHand={(h) => setHand(h)}

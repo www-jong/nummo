@@ -174,7 +174,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-2xl flex flex-col items-center gap-4 sm:gap-6 px-0 py-2 sm:p-6 font-mono animate-fade-in transition-colors">
+    <div className="w-full max-w-4xl flex flex-col items-center gap-4 sm:gap-6 px-0 py-2 sm:py-0 font-mono animate-fade-in transition-colors">
       {/* 1. 사용자 계정 카드 */}
       <div className="w-full p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-sm dark:shadow-xl">
         <div className="min-w-0 flex flex-wrap items-center gap-2 sm:gap-3">
@@ -497,13 +497,13 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
           <table className="w-full text-left text-xs table-fixed">
             <thead className="text-[11px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950/40">
               <tr>
-                {viewTab === 'RANKING' && <th className="py-2.5 px-3 w-14 text-center">순위</th>}
-                <th className="py-2.5 px-3 w-32">날짜 (한국시간)</th>
-                <th className="py-2.5 px-3 w-auto min-w-[110px]">사용자</th>
+                {viewTab === 'RANKING' && <th className="py-2.5 px-3 w-16 text-center">순위</th>}
+                <th className="py-2.5 px-3 w-36">날짜 (한국시간)</th>
+                <th className="py-2.5 px-3 w-auto min-w-[130px]">사용자</th>
                 <th className="py-2.5 px-3 w-20 text-center">손</th>
-                <th className="py-2.5 px-3 w-28">종목</th>
-                <th className="py-2.5 px-3 w-20 text-right">KPM</th>
-                <th className="py-2.5 px-3 w-20 text-right">정확도</th>
+                <th className="py-2.5 px-3 w-36">종목</th>
+                <th className="py-2.5 px-3 w-24 text-right">KPM</th>
+                <th className="py-2.5 px-3 w-24 text-right">정확도</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800/60 text-neutral-700 dark:text-neutral-300">

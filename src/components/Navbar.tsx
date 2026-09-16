@@ -32,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <nav
-      className={`sticky top-0 md:static z-40 w-full max-w-2xl grid grid-cols-[auto_1fr] md:flex items-center md:justify-between gap-x-3 gap-y-2 py-2.5 sm:py-3 px-2 sm:px-4 bg-white/90 dark:bg-[#121214]/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-neutral-200 dark:border-neutral-800/80 transition-opacity duration-300 ${
+      className={`sticky top-0 md:static z-40 w-full max-w-4xl grid grid-cols-[auto_1fr] md:flex items-center md:justify-between gap-x-3 gap-y-2 py-2.5 sm:py-3 px-2 sm:px-4 bg-white/90 dark:bg-[#121214]/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-neutral-200 dark:border-neutral-800/80 transition-opacity duration-300 ${
         isPracticing ? 'md:opacity-20 md:pointer-events-none' : 'opacity-100'
       }`}
     >
