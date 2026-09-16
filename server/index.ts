@@ -417,7 +417,7 @@ app.get('/api/users', async (_request, reply) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query<RowDataPacket[]>(
-      'SELECT DISTINCT user_name FROM records ORDER BY user_name ASC'
+      'SELECT DISTINCT u.nickname AS user_name FROM records r JOIN users u ON r.user_id = u.id ORDER BY u.nickname ASC'
     );
     return rows.map((r) => r.user_name);
   } catch (err) {
@@ -504,6 +504,75 @@ function setCachedRecords(key: string, records: RowDataPacket[], ttlMs: number):
   recordsCache.set(key, { records, expiresAt: Date.now() + ttlMs });
 }
 
+// 닉네임 변경 API
+app.post('/api/auth/change-nickname', {
+  config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+}, async (request, reply) => {
+  const currentNickname = readSignedCookie(request, 'nummo_user');
+  if (!currentNickname) {
+    return reply.status(401).send({ error: '로그인이 필요합니다.' });
+  }
+
+  const { nickname } = (request.body || {}) as { nickname?: string };
+  const trimmed = (nickname || '').trim();
+
+  // 유효성 검증
+  const validRegex = /^[a-zA-Z0-9가-힣]{2,12}$/;
+  if (!validRegex.test(trimmed)) {
+    return reply.status(400).send({ error: '2~12자의 한글, 영문, 숫자만 사용 가능합니다.' });
+  }
+
+  if (trimmed === currentNickname) {
+    return reply.status(400).send({ error: '현재 사용 중인 닉네임과 동일합니다.' });
+  }
+
+  try {
+    const pool = getPool();
+
+    // 중복 체크
+    const [existing] = await pool.query<RowDataPacket[]>(
+      'SELECT 1 FROM users WHERE nickname = ? LIMIT 1',
+      [trimmed]
+    );
+    if (existing.length > 0) {
+      return reply.status(409).send({ error: '이미 사용 중인 닉네임입니다.' });
+    }
+
+    // 닉네임 수정
+    const [res] = await pool.query<ResultSetHeader>(
+      'UPDATE users SET nickname = ? WHERE nickname = ?',
+      [trimmed, currentNickname]
+    );
+
+    if (res.affectedRows === 0) {
+      return reply.status(404).send({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    // 랭킹 캐시 초기화
+    recordsCache.clear();
+    recordsCacheEntries.set(0);
+
+    // 로그인 쿠키 갱신
+    reply.setCookie('nummo_user', trimmed, {
+      ...signedCookieOptions,
+      maxAge: 60 * 60 * 24 * 30, // 30일
+    });
+
+    request.log.info(
+      { event: 'nickname_changed', from: currentNickname, to: trimmed },
+      'User nickname changed successfully'
+    );
+
+    return { success: true, nickname: trimmed };
+  } catch (err: any) {
+    if (err?.code === 'ER_DUP_ENTRY') {
+      return reply.status(409).send({ error: '이미 사용 중인 닉네임입니다.' });
+    }
+    app.log.error(err);
+    reply.status(500).send({ error: '닉네임 변경 중 오류가 발생했습니다.' });
+  }
+});
+
 // 기록 조회 (유저별, 모드별, 손별, 정렬별)
 app.get('/api/records', {
   config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
@@ -547,42 +616,49 @@ app.get('/api/records', {
     const params: (string | number)[] = [];
 
     if (user) {
-      filters.push('user_name = ?');
+      filters.push('u.nickname = ?');
       params.push(user);
     }
     if (hand) {
-      filters.push('hand = ?');
+      filters.push('r.hand = ?');
       params.push(hand);
     }
     if (mode) {
-      filters.push('mode = ?');
+      filters.push('r.mode = ?');
       params.push(mode);
     }
 
     const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
     let query: string;
     if (sort === 'ranking') {
-      // 사용자마다 해당 조건의 최고 기록 한 건만 순위에 포함
+      // 사용자마다 해당 조건의 최고 기록 한 건만 순위에 포함 (user_id 기준 랭킹 계산 후 users 조인)
       query = `
-        SELECT id, user_name, hand, mode, kpm, accuracy, total_keys,
-               correct_keys, wrong_keys, duration_seconds, created_at
+        SELECT ranked.id, ranked.user_id, u.nickname AS user_name, ranked.hand, ranked.mode,
+               ranked.kpm, ranked.accuracy, ranked.total_keys, ranked.correct_keys,
+               ranked.wrong_keys, ranked.duration_seconds, ranked.created_at
         FROM (
-          SELECT records.*,
+          SELECT r.*,
                  ROW_NUMBER() OVER (
-                   PARTITION BY user_name
-                   ORDER BY kpm DESC, accuracy DESC, created_at DESC
+                   PARTITION BY r.user_id
+                   ORDER BY r.kpm DESC, r.accuracy DESC, r.created_at DESC
                  ) AS user_best_rank
-          FROM records
+          FROM records r
+          JOIN users u ON r.user_id = u.id
           ${whereClause}
-        ) AS ranked_records
-        WHERE user_best_rank = 1
-        ORDER BY kpm DESC, accuracy DESC, created_at DESC
+        ) AS ranked
+        JOIN users u ON ranked.user_id = u.id
+        WHERE ranked.user_best_rank = 1
+        ORDER BY ranked.kpm DESC, ranked.accuracy DESC, ranked.created_at DESC
         LIMIT ?`;
     } else {
       query = `
-        SELECT * FROM records
+        SELECT r.id, r.user_id, u.nickname AS user_name, r.hand, r.mode,
+               r.kpm, r.accuracy, r.total_keys, r.correct_keys,
+               r.wrong_keys, r.duration_seconds, r.created_at
+        FROM records r
+        JOIN users u ON r.user_id = u.id
         ${whereClause}
-        ORDER BY created_at DESC
+        ORDER BY r.created_at DESC
         LIMIT ?`;
     }
     params.push(limit);
@@ -808,11 +884,22 @@ app.post('/api/records', {
   try {
     await conn.beginTransaction();
 
+    const [userRows] = await conn.query<RowDataPacket[]>(
+      'SELECT id FROM users WHERE nickname = ? LIMIT 1',
+      [authenticatedNickname]
+    );
+    if (userRows.length === 0) {
+      await conn.rollback();
+      officialRecordsSavedTotal.inc({ result: 'unauthorized', mode: body.mode, hand: body.hand });
+      return reply.status(401).send({ error: 'User account not found' });
+    }
+    const userId = Number(userRows[0].id);
+
     const [res] = await conn.query<ResultSetHeader>(
-      `INSERT INTO records (user_name, hand, mode, kpm, accuracy, total_keys, correct_keys, wrong_keys, duration_seconds, created_at)
+      `INSERT INTO records (user_id, hand, mode, kpm, accuracy, total_keys, correct_keys, wrong_keys, duration_seconds, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        authenticatedNickname,
+        userId,
         body.hand,
         body.mode,
         body.kpm,

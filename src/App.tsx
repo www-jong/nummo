@@ -8,6 +8,7 @@ import { RecordsView } from './components/RecordsView.js';
 import { ResultModal } from './components/ResultModal.js';
 import { ConfirmResetModal } from './components/ConfirmResetModal.js';
 import { NicknameModal } from './components/NicknameModal.js';
+import { ChangeNicknameModal } from './components/ChangeNicknameModal.js';
 import { useNumpadKeyCapture } from './hooks/useNumpadKeyCapture.js';
 import { PRACTICE_MODES } from './lib/generator.js';
 
@@ -37,6 +38,7 @@ export default function App() {
   });
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState<boolean>(false);
+  const [isChangeNicknameModalOpen, setIsChangeNicknameModalOpen] = useState<boolean>(false);
 
   // 세션 확인 및 구글 로그인 콜백 파라미터 처리
   useEffect(() => {
@@ -89,6 +91,12 @@ export default function App() {
   const handleNicknameSuccess = (newNickname: string) => {
     setIsNicknameModalOpen(false);
     setIsLoggedIn(true);
+    setUserName(newNickname);
+    localStorage.setItem('nummo_user', newNickname);
+  };
+
+  // 닉네임 변경 성공
+  const handleChangeNicknameSuccess = (newNickname: string) => {
     setUserName(newNickname);
     localStorage.setItem('nummo_user', newNickname);
   };
@@ -259,6 +267,7 @@ export default function App() {
         isPracticing={viewPhase === 'TYPING' && isPracticing}
         theme={theme}
         onToggleTheme={toggleTheme}
+        onChangeNickname={() => setIsChangeNicknameModalOpen(true)}
       />
 
       {/* 2. 메인 컨텐츠 영역 */}
@@ -411,6 +420,14 @@ export default function App() {
       <NicknameModal
         isOpen={isNicknameModalOpen}
         onSuccess={handleNicknameSuccess}
+      />
+
+      {/* 7. 로그인 유저 닉네임 변경 모달 */}
+      <ChangeNicknameModal
+        isOpen={isChangeNicknameModalOpen}
+        currentNickname={userName}
+        onClose={() => setIsChangeNicknameModalOpen(false)}
+        onSuccess={handleChangeNicknameSuccess}
       />
     </div>
   );

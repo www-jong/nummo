@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Pencil } from 'lucide-react';
 
 export type MainTab = 'PRACTICE' | 'RECORDS';
 
@@ -12,6 +12,7 @@ interface NavbarProps {
   isPracticing?: boolean;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
+  onChangeNickname?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -23,6 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isPracticing = false,
   theme = 'dark',
   onToggleTheme,
+  onChangeNickname,
 }) => {
   const handleGoogleLogin = () => {
     window.location.href = '/api/auth/google/login';
@@ -88,9 +90,21 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {isLoggedIn ? (
           <div className="min-w-0 flex items-center gap-2">
-            <span className="max-w-28 sm:max-w-40 truncate text-amber-600 dark:text-amber-300 font-bold bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-800">
-              {currentUser}
-            </span>
+            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-800">
+              <span className="max-w-24 sm:max-w-40 truncate text-amber-600 dark:text-amber-300 font-bold">
+                {currentUser}
+              </span>
+              {onChangeNickname && (
+                <button
+                  type="button"
+                  onClick={onChangeNickname}
+                  title="닉네임 변경"
+                  className="p-0.5 rounded text-neutral-400 hover:text-amber-600 dark:hover:text-amber-300 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              )}
+            </div>
             <button
               type="button"
               onClick={onLogout}
