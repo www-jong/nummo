@@ -229,26 +229,26 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
   return (
     <div className="flex flex-col items-center w-full max-w-xl">
       {/* 상태 바 */}
-      <div className="flex items-center justify-between gap-2 w-full px-1 sm:px-4 mb-2 sm:mb-3 text-xs font-mono text-neutral-400">
+      <div className="flex items-center justify-between gap-2 w-full px-1 sm:px-4 mb-2 sm:mb-3 text-xs font-mono text-neutral-500 dark:text-neutral-400">
         <div className="flex items-center gap-3 sm:gap-5">
           <div>
-            <span className="text-neutral-500">KPM </span>
-            <span className="text-amber-400 font-bold text-sm">{currentKpm}</span>
+            <span className="text-neutral-400 dark:text-neutral-500">KPM </span>
+            <span className="text-amber-500 dark:text-amber-400 font-bold text-sm">{currentKpm}</span>
           </div>
           <div>
-            <span className="text-neutral-500">정확도 </span>
-            <span className="text-emerald-400 font-bold text-sm">{accuracy}%</span>
+            <span className="text-neutral-400 dark:text-neutral-500">정확도 </span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">{accuracy}%</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <span className="text-neutral-500 font-medium">
+          <span className="text-neutral-400 dark:text-neutral-500 font-medium">
             {problemIndex + 1} / {problems.length}
           </span>
           <button
             type="button"
             onClick={resetPractice}
-            className="min-h-8 text-[11px] text-neutral-400 hover:text-white px-2 py-0.5 rounded border border-neutral-800 hover:border-neutral-700 transition-colors"
+            className="min-h-8 text-[11px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white px-2 py-0.5 rounded border border-neutral-300 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-700 bg-white dark:bg-transparent transition-colors shadow-sm"
           >
             다시 시작
           </button>
@@ -256,11 +256,11 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
       </div>
 
       {/* 수식 타이핑 디스플레이 */}
-      <div className="relative w-full px-2 sm:px-6 py-4 sm:py-6 rounded-2xl bg-neutral-900/70 border border-neutral-800 flex items-center justify-center min-h-[76px] sm:min-h-[90px] shadow-xl backdrop-blur-sm overflow-hidden">
+      <div className="relative w-full px-2 sm:px-6 py-4 sm:py-6 rounded-2xl bg-white dark:bg-neutral-900/70 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center min-h-[76px] sm:min-h-[90px] shadow-xl dark:shadow-2xl backdrop-blur-sm overflow-hidden transition-colors">
         {/* 일시정지 오버레이 */}
         {isPaused && (
-          <div className="absolute inset-0 z-20 bg-neutral-950/85 backdrop-blur-sm flex items-center justify-center gap-4 animate-fade-in">
-            <span className="text-xs font-bold text-neutral-300 tracking-wider">
+          <div className="absolute inset-0 z-20 bg-neutral-900/80 dark:bg-neutral-950/85 backdrop-blur-sm flex items-center justify-center gap-4 animate-fade-in">
+            <span className="text-xs font-bold text-white dark:text-neutral-300 tracking-wider">
               일시정지됨
             </span>
             <button
@@ -281,17 +281,17 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
             const typedItem = isTyped ? typedHistory[idx] : null;
 
             let charDisplay = targetChar;
-            let colorClass = 'text-neutral-600'; // 미입력
+            let colorClass = 'text-neutral-300 dark:text-neutral-600'; // 미입력
 
             if (isTyped && typedItem) {
               if (typedItem.isError) {
                 charDisplay = typedItem.typed;
-                colorClass = 'text-rose-500 font-bold underline underline-offset-4 decoration-rose-500/80';
+                colorClass = 'text-rose-600 dark:text-rose-500 font-bold underline underline-offset-4 decoration-rose-500/80';
               } else {
-                colorClass = 'text-neutral-100';
+                colorClass = 'text-neutral-800 dark:text-neutral-100';
               }
             } else if (isCurrent) {
-              colorClass = 'text-amber-300 font-bold';
+              colorClass = 'text-amber-500 dark:text-amber-300 font-bold';
             }
 
             return (
@@ -300,7 +300,7 @@ export const TypingArena: React.FC<TypingArenaProps> = ({
                   {charDisplay}
                 </span>
                 {isCurrent && (
-                  <span className="absolute -bottom-1.5 w-4/5 h-0.5 bg-amber-400 animate-pulse rounded-full" />
+                  <span className="absolute -bottom-1.5 w-4/5 h-0.5 bg-amber-500 dark:bg-amber-400 animate-pulse rounded-full" />
                 )}
               </span>
             );

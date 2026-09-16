@@ -16,22 +16,22 @@ export const ConfirmResetModal: React.FC<ConfirmResetModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 animate-fade-in">
-      <div className="w-full max-w-sm p-4 sm:p-6 rounded-2xl bg-[#1a1a1e] border border-neutral-800 shadow-2xl flex flex-col items-center text-center font-mono">
-        <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-3 text-lg font-bold">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70 backdrop-blur-sm p-3 sm:p-4 animate-fade-in">
+      <div className="w-full max-w-sm p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#1a1a1e] border border-neutral-200 dark:border-neutral-800 shadow-2xl flex flex-col items-center text-center font-mono">
+        <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 mb-3 text-lg font-bold">
           !
         </div>
-        <h3 className="text-base font-bold text-neutral-100 mb-1.5">
+        <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-100 mb-1.5">
           {message}
         </h3>
-        <p className="text-xs text-neutral-400 mb-5 leading-relaxed">
+        <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-5 leading-relaxed">
           설정을 변경하면 현재까지 타건 중인 세션이 중단되고 처음부터 다시 시작됩니다.
         </p>
         <div className="flex items-center gap-2.5 w-full">
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 py-2 px-3 rounded-xl border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-xs font-semibold text-neutral-300 transition-colors"
+            className="flex-1 py-2 px-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 transition-colors"
           >
             계속 연습
           </button>

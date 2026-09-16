@@ -39,18 +39,18 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
   const selectedModeMeta = PRACTICE_MODES.find((m) => m.id === mode) || PRACTICE_MODES[0];
 
   return (
-    <div className="w-full max-w-2xl flex flex-col gap-4 sm:gap-5 p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-neutral-900/90 border border-neutral-800 shadow-2xl backdrop-blur-md font-mono animate-fade-in select-none">
+    <div className="w-full max-w-2xl flex flex-col gap-4 sm:gap-5 p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-800 shadow-xl dark:shadow-2xl backdrop-blur-md font-mono animate-fade-in select-none transition-colors">
       {/* 타이틀 및 헤더 */}
-      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-neutral-800/80 pb-3.5">
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-neutral-200 dark:border-neutral-800/80 pb-3.5">
         <div>
-          <h2 className="text-base font-bold text-neutral-100 flex items-center gap-2">
+          <h2 className="text-base font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
             연습 세션 설정
           </h2>
           <p className="text-[11px] text-neutral-500 mt-0.5">
             원하는 타건 모드와 손을 선택한 후 연습을 시작하세요.
           </p>
         </div>
-        <div className="text-[11px] text-amber-400/90 px-2.5 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 font-medium">
+        <div className="text-[11px] text-amber-600 dark:text-amber-400/90 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 font-medium">
           자유 연습 모드
         </div>
       </div>
@@ -58,24 +58,24 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
       {/* 1. 방식 & 손 선택 (2열 그리드) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {/* 입력 방식 (실전 vs 교정) */}
-        <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-neutral-950/60 border border-neutral-800/80">
-          <span className="text-[11px] font-semibold text-neutral-400">입력 방식</span>
+        <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-950/60 border border-neutral-200 dark:border-neutral-800/80">
+          <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400">입력 방식</span>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => onChangeBehavior('CONTINUOUS')}
               className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1 ${
                 behavior === 'CONTINUOUS'
-                  ? 'bg-neutral-800 border-amber-400/80 shadow-md'
-                  : 'bg-neutral-900/60 border-neutral-800 hover:border-neutral-700'
+                  ? 'bg-white dark:bg-neutral-800 border-amber-500 dark:border-amber-400/80 shadow-md'
+                  : 'bg-white/70 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold ${behavior === 'CONTINUOUS' ? 'text-amber-300' : 'text-neutral-300'}`}>
+                <span className={`text-xs font-bold ${behavior === 'CONTINUOUS' ? 'text-amber-600 dark:text-amber-300' : 'text-neutral-700 dark:text-neutral-300'}`}>
                   실전 모드
                 </span>
                 {behavior === 'CONTINUOUS' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
                 )}
               </div>
               <span className="text-[10px] text-neutral-500 leading-tight">
@@ -88,16 +88,16 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
               onClick={() => onChangeBehavior('STRICT')}
               className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1 ${
                 behavior === 'STRICT'
-                  ? 'bg-neutral-800 border-amber-400/80 shadow-md'
-                  : 'bg-neutral-900/60 border-neutral-800 hover:border-neutral-700'
+                  ? 'bg-white dark:bg-neutral-800 border-amber-500 dark:border-amber-400/80 shadow-md'
+                  : 'bg-white/70 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold ${behavior === 'STRICT' ? 'text-amber-300' : 'text-neutral-300'}`}>
+                <span className={`text-xs font-bold ${behavior === 'STRICT' ? 'text-amber-600 dark:text-amber-300' : 'text-neutral-700 dark:text-neutral-300'}`}>
                   교정 모드
                 </span>
                 {behavior === 'STRICT' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
                 )}
               </div>
               <span className="text-[10px] text-neutral-500 leading-tight">
@@ -108,23 +108,23 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
         </div>
 
         {/* 손가락 가이드 (왼손 vs 오른손) */}
-        <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-neutral-950/60 border border-neutral-800/80">
-          <span className="text-[11px] font-semibold text-neutral-400">손 선택</span>
+        <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-950/60 border border-neutral-200 dark:border-neutral-800/80">
+          <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400">손 선택</span>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => onChangeHand('LEFT')}
               className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1 ${
                 hand === 'LEFT'
-                  ? 'bg-neutral-800 border-white/60 shadow-md'
-                  : 'bg-neutral-900/60 border-neutral-800 hover:border-neutral-700'
+                  ? 'bg-white dark:bg-neutral-800 border-neutral-900 dark:border-white/60 shadow-md'
+                  : 'bg-white/70 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold ${hand === 'LEFT' ? 'text-white' : 'text-neutral-300'}`}>
+                <span className={`text-xs font-bold ${hand === 'LEFT' ? 'text-neutral-950 dark:text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
                   왼손
                 </span>
-                {hand === 'LEFT' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                {hand === 'LEFT' && <span className="w-1.5 h-1.5 rounded-full bg-neutral-950 dark:bg-white" />}
               </div>
               <span className="text-[10px] text-neutral-500 leading-tight">
                 검지 6·3·Enter, 약지 4·1
@@ -136,15 +136,15 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
               onClick={() => onChangeHand('RIGHT')}
               className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1 ${
                 hand === 'RIGHT'
-                  ? 'bg-neutral-800 border-white/60 shadow-md'
-                  : 'bg-neutral-900/60 border-neutral-800 hover:border-neutral-700'
+                  ? 'bg-white dark:bg-neutral-800 border-neutral-900 dark:border-white/60 shadow-md'
+                  : 'bg-white/70 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold ${hand === 'RIGHT' ? 'text-white' : 'text-neutral-300'}`}>
+                <span className={`text-xs font-bold ${hand === 'RIGHT' ? 'text-neutral-950 dark:text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
                   오른손
                 </span>
-                {hand === 'RIGHT' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                {hand === 'RIGHT' && <span className="w-1.5 h-1.5 rounded-full bg-neutral-950 dark:bg-white" />}
               </div>
               <span className="text-[10px] text-neutral-500 leading-tight">
                 표준 4·5·6 중심, 소지 Enter
@@ -155,9 +155,9 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
       </div>
 
       {/* 2. 연산 모드 선택 (칩 그리드) */}
-      <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-neutral-950/60 border border-neutral-800/80">
+      <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-950/60 border border-neutral-200 dark:border-neutral-800/80">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-          <span className="text-[11px] font-semibold text-neutral-400">연습 테마</span>
+          <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400">연습 테마</span>
           <span className="text-[11px] text-neutral-500">
             {selectedModeMeta.description}
           </span>
@@ -173,16 +173,16 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
                 onClick={() => onChangeMode(m.id)}
                 className={`py-2 px-2.5 rounded-xl text-left border transition-all flex flex-col gap-0.5 ${
                   isSelected
-                    ? 'bg-neutral-800 border-amber-400/90 shadow-sm'
-                    : 'bg-neutral-900/50 border-neutral-800 hover:border-neutral-700'
+                    ? 'bg-white dark:bg-neutral-800 border-amber-500 dark:border-amber-400/90 shadow-sm'
+                    : 'bg-white/70 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className={`text-[11px] font-bold ${isSelected ? 'text-amber-300' : 'text-neutral-300'}`}>
+                  <span className={`text-[11px] font-bold ${isSelected ? 'text-amber-600 dark:text-amber-300' : 'text-neutral-700 dark:text-neutral-300'}`}>
                     {m.name}
                   </span>
                 </div>
-                <span className={`text-[10px] ${isSelected ? 'text-amber-400/70' : 'text-neutral-600'}`}>
+                <span className={`text-[10px] ${isSelected ? 'text-amber-600/80 dark:text-amber-400/70' : 'text-neutral-400 dark:text-neutral-600'}`}>
                   {m.badge}
                 </span>
               </button>
@@ -191,12 +191,12 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
         </div>
 
         {/* 선택된 모드의 실시간 문제 예시 미리보기 박스 */}
-        <div className="mt-2.5 p-3 rounded-xl bg-neutral-900/90 border border-neutral-800/90 flex flex-col min-[380px]:flex-row min-[380px]:items-center justify-between gap-1.5">
+        <div className="mt-2.5 p-3 rounded-xl bg-white dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-800/90 flex flex-col min-[380px]:flex-row min-[380px]:items-center justify-between gap-1.5 shadow-sm">
           <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">
               예시 문제
             </span>
-            <span className="text-sm font-bold text-amber-300 tracking-wider font-mono">
+            <span className="text-sm font-bold text-amber-600 dark:text-amber-300 tracking-wider font-mono">
               {selectedModeMeta.example}
             </span>
           </div>
@@ -210,10 +210,10 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
         {/* 문항 수 */}
         <div className="w-full sm:w-auto flex flex-wrap items-center gap-2">
-          <span className="text-[11px] text-neutral-400 font-medium">문항 수:</span>
+          <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">문항 수:</span>
           <div className="w-full min-[390px]:w-auto flex flex-wrap items-center gap-2">
             {/* 5, 10, 20 프리셋 (h-9 통일) */}
-            <div className="h-9 flex items-center p-1 bg-neutral-950 border border-neutral-800 rounded-xl">
+            <div className="h-9 flex items-center p-1 bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl">
               {[5, 10, 20].map((cnt) => (
                 <button
                   key={cnt}
@@ -221,8 +221,8 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
                   onClick={() => onChangeProblemCount(cnt)}
                   className={`h-full px-3 flex items-center justify-center rounded-lg text-xs font-semibold transition-all ${
                     problemCount === cnt
-                      ? 'bg-neutral-800 text-amber-300 shadow-sm border border-neutral-700'
-                      : 'text-neutral-500 hover:text-neutral-300'
+                      ? 'bg-white dark:bg-neutral-800 text-amber-600 dark:text-amber-300 shadow-sm border border-neutral-200 dark:border-neutral-700'
+                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-300'
                   }`}
                 >
                   {cnt}
@@ -231,7 +231,7 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
             </div>
 
             {/* 수동 직접 입력 (h-9 통일, 자유 편집 지원) */}
-            <div className="h-9 flex flex-1 min-[390px]:flex-none items-center justify-center gap-1.5 px-2.5 sm:px-3 rounded-xl bg-neutral-950 border border-neutral-800">
+            <div className="h-9 flex flex-1 min-[390px]:flex-none items-center justify-center gap-1.5 px-2.5 sm:px-3 rounded-xl bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
               <input
                 type="text"
                 inputMode="numeric"
@@ -258,7 +258,7 @@ export const PracticeConfigBar: React.FC<PracticeConfigBarProps> = ({
                   }
                 }}
                 placeholder="문항"
-                className="w-8 bg-transparent text-center text-xs font-bold text-amber-300 focus:outline-none"
+                className="w-8 bg-transparent text-center text-xs font-bold text-amber-600 dark:text-amber-300 focus:outline-none"
               />
               <span className="text-[10px] text-neutral-500">문항 (최대 100)</span>
             </div>

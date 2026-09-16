@@ -1,4 +1,5 @@
 import React from 'react';
+import { Sun, Moon } from 'lucide-react';
 
 export type MainTab = 'PRACTICE' | 'RECORDS';
 
@@ -9,6 +10,8 @@ interface NavbarProps {
   isLoggedIn?: boolean;
   onLogout?: () => void;
   isPracticing?: boolean;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -18,6 +21,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   isLoggedIn = false,
   onLogout,
   isPracticing = false,
+  theme = 'dark',
+  onToggleTheme,
 }) => {
   const handleGoogleLogin = () => {
     window.location.href = '/api/auth/google/login';
@@ -25,26 +30,26 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <nav
-      className={`sticky top-0 md:static z-40 w-full max-w-2xl grid grid-cols-[auto_1fr] md:flex items-center md:justify-between gap-x-3 gap-y-2 py-2.5 sm:py-3 px-2 sm:px-4 bg-[#121214]/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-neutral-800/80 transition-opacity duration-300 ${
+      className={`sticky top-0 md:static z-40 w-full max-w-2xl grid grid-cols-[auto_1fr] md:flex items-center md:justify-between gap-x-3 gap-y-2 py-2.5 sm:py-3 px-2 sm:px-4 bg-white/90 dark:bg-[#121214]/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-neutral-200 dark:border-neutral-800/80 transition-opacity duration-300 ${
         isPracticing ? 'md:opacity-20 md:pointer-events-none' : 'opacity-100'
       }`}
     >
       {/* 로고 */}
       <div className="flex items-center gap-2">
-        <span className="text-xl font-bold tracking-widest text-neutral-100 font-mono">
+        <span className="text-xl font-bold tracking-widest text-neutral-900 dark:text-neutral-100 font-mono">
           NUMMO
         </span>
       </div>
 
       {/* 대메뉴 탭: 연습 모드 vs 기록 모드 */}
-      <div className="order-3 col-span-2 md:order-none md:col-span-1 grid grid-cols-2 md:flex items-center w-full md:w-auto p-1 bg-neutral-900 border border-neutral-800 rounded-xl font-mono text-xs">
+      <div className="order-3 col-span-2 md:order-none md:col-span-1 grid grid-cols-2 md:flex items-center w-full md:w-auto p-1 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl font-mono text-xs">
         <button
           type="button"
           onClick={() => onSelectTab('PRACTICE')}
           className={`min-h-9 px-3 sm:px-4 py-1.5 rounded-lg transition-all ${
             currentTab === 'PRACTICE'
-              ? 'bg-neutral-800 text-amber-300 font-bold shadow-sm border border-neutral-700'
-              : 'text-neutral-400 hover:text-neutral-200'
+              ? 'bg-white dark:bg-neutral-800 text-amber-600 dark:text-amber-300 font-bold shadow-sm border border-neutral-200 dark:border-neutral-700'
+              : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
           }`}
         >
           연습 모드
@@ -54,25 +59,42 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => onSelectTab('RECORDS')}
           className={`min-h-9 px-3 sm:px-4 py-1.5 rounded-lg transition-all ${
             currentTab === 'RECORDS'
-              ? 'bg-neutral-800 text-amber-300 font-bold shadow-sm border border-neutral-700'
-              : 'text-neutral-400 hover:text-neutral-200'
+              ? 'bg-white dark:bg-neutral-800 text-amber-600 dark:text-amber-300 font-bold shadow-sm border border-neutral-200 dark:border-neutral-700'
+              : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
           }`}
         >
           기록 모드
         </button>
       </div>
 
-      {/* 우측 사용자 / 로그인 상태 */}
-      <div className="justify-self-end min-w-0 text-xs font-mono flex items-center gap-2.5">
+      {/* 우측 사용자 / 로그인 상태 & 테마 토글 */}
+      <div className="justify-self-end min-w-0 text-xs font-mono flex items-center gap-2 sm:gap-2.5">
+        {/* 테마 토글 버튼 */}
+        {onToggleTheme && (
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? '라이트 모드로 변경' : '다크 모드로 변경'}
+            aria-label="테마 전환"
+            className="min-h-9 p-2 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:text-amber-500 dark:hover:text-amber-300 transition-all active:scale-95 shadow-sm"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-neutral-600" />
+            )}
+          </button>
+        )}
+
         {isLoggedIn ? (
           <div className="min-w-0 flex items-center gap-2">
-            <span className="max-w-28 sm:max-w-40 truncate text-amber-300 font-bold bg-neutral-900 px-2 py-1 rounded-md border border-neutral-800">
+            <span className="max-w-28 sm:max-w-40 truncate text-amber-600 dark:text-amber-300 font-bold bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-800">
               {currentUser}
             </span>
             <button
               type="button"
               onClick={onLogout}
-              className="text-neutral-500 hover:text-neutral-300 text-[11px] underline underline-offset-2 transition-colors"
+              className="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 text-[11px] underline underline-offset-2 transition-colors"
             >
               로그아웃
             </button>
@@ -81,7 +103,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="min-h-9 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-neutral-100 border border-neutral-700 text-xs font-medium whitespace-nowrap transition-all shadow-sm active:scale-95"
+            className="min-h-9 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white hover:bg-neutral-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 border border-neutral-300 dark:border-neutral-700 text-xs font-medium whitespace-nowrap transition-all shadow-sm active:scale-95"
           >
             {/* Google SVG Icon */}
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">

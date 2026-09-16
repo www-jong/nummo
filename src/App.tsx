@@ -15,6 +15,22 @@ export default function App() {
   const [mainTab, setMainTab] = useState<MainTab>('PRACTICE');
   const [viewPhase, setViewPhase] = useState<'CONFIG' | 'TYPING'>('CONFIG'); // CONFIG: 설정 단계, TYPING: 타이핑 집중 단계
 
+  // 테마 모드 ('dark' | 'light')
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('nummo_theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    return 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('nummo_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   // 사용자 정보 & 로그인 상태
   const [userName, setUserName] = useState<string>(() => {
     return localStorage.getItem('nummo_user') || '게스트';
@@ -226,7 +242,7 @@ export default function App() {
   };
 
   return (
-    <div className={`${viewPhase === 'TYPING' ? 'h-[100dvh] overflow-hidden' : 'min-h-screen min-h-[100dvh] overflow-x-clip'} bg-[#121214] text-neutral-200 flex flex-col items-center justify-between p-0 sm:p-4 select-none font-mono`}>
+    <div className={`${viewPhase === 'TYPING' ? 'h-[100dvh] overflow-hidden' : 'min-h-screen min-h-[100dvh] overflow-x-clip'} bg-neutral-100 dark:bg-[#121214] text-neutral-800 dark:text-neutral-200 flex flex-col items-center justify-between p-0 sm:p-4 select-none font-mono transition-colors duration-200`}>
       {/* 1. 상단 네비바 */}
       <Navbar
         currentTab={mainTab}
@@ -241,6 +257,8 @@ export default function App() {
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
         isPracticing={viewPhase === 'TYPING' && isPracticing}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* 2. 메인 컨텐츠 영역 */}
