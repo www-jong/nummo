@@ -19,6 +19,7 @@ const dbConfig = {
   user: requireEnv('DB_USER'),
   password: requireEnv('DB_PASSWORD'),
   database: requireEnv('DB_NAME'),
+  dateStrings: true,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

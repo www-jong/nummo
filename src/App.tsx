@@ -42,6 +42,7 @@ export default function App() {
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState<boolean>(false);
   const [isChangeNicknameModalOpen, setIsChangeNicknameModalOpen] = useState<boolean>(false);
   const [practiceHistoryRefresh, setPracticeHistoryRefresh] = useState<number>(0);
+  const [recordsRefreshTrigger, setRecordsRefreshTrigger] = useState<number>(0);
 
   // 세션 확인 및 구글 로그인 콜백 파라미터 처리
   useEffect(() => {
@@ -200,6 +201,7 @@ export default function App() {
           if (res.ok) {
             setIsSavedToDb(true);
             clearClientCache('nummo_records_');
+            setRecordsRefreshTrigger((prev) => prev + 1);
           }
         } catch (err) {
           console.error('Failed to save record to MySQL:', err);
@@ -372,6 +374,7 @@ export default function App() {
                 isLoggedIn={isLoggedIn}
                 currentHand={hand}
                 onStartRecordSession={startRecordSession}
+                refreshTrigger={recordsRefreshTrigger}
               />
             ) : (
               <div className="flex flex-col items-center gap-4 w-full max-w-2xl">

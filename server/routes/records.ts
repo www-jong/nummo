@@ -186,24 +186,15 @@ export const recordsRoutes: FastifyPluginAsync = async (app) => {
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
       let query: string;
       if (sort === 'ranking') {
-        // 사용자마다 해당 조건의 최고 기록 한 건만 순위에 포함 (user_id 기준 랭킹 계산 후 users 조인)
+        // 기록별 순위 (동일 유저의 여러 기록 중복 허용, KPM/정확도 순)
         query = `
-          SELECT ranked.id, ranked.user_id, u.nickname AS user_name, ranked.hand, ranked.mode,
-                 ranked.kpm, ranked.accuracy, ranked.total_keys, ranked.correct_keys,
-                 ranked.wrong_keys, ranked.duration_seconds, ranked.created_at
-          FROM (
-            SELECT r.*,
-                   ROW_NUMBER() OVER (
-                     PARTITION BY r.user_id
-                     ORDER BY r.kpm DESC, r.accuracy DESC, r.created_at DESC
-                   ) AS user_best_rank
-            FROM records r
-            JOIN users u ON r.user_id = u.id
-            ${whereClause}
-          ) AS ranked
-          JOIN users u ON ranked.user_id = u.id
-          WHERE ranked.user_best_rank = 1
-          ORDER BY ranked.kpm DESC, ranked.accuracy DESC, ranked.created_at DESC
+          SELECT r.id, r.user_id, u.nickname AS user_name, r.hand, r.mode,
+                 r.kpm, r.accuracy, r.total_keys, r.correct_keys,
+                 r.wrong_keys, r.duration_seconds, r.created_at
+          FROM records r
+          JOIN users u ON r.user_id = u.id
+          ${whereClause}
+          ORDER BY r.kpm DESC, r.accuracy DESC, r.created_at DESC
           LIMIT ?`;
       } else {
         query = `

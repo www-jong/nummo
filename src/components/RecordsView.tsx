@@ -8,6 +8,7 @@ interface RecordsViewProps {
   isLoggedIn?: boolean;
   currentHand?: HandType;
   onStartRecordSession: (hand: HandType, mode: PracticeCategory) => void;
+  refreshTrigger?: number;
 }
 
 // 3대 종목 정의 (담백한 용어로 통일)
@@ -41,25 +42,12 @@ const OFFICIAL_MODES: Array<{
   },
 ];
 
-// 한국 시간(KST) 완벽 포맷팅
+// 한국 시간(KST) 완벽 포맷팅 (DB에 이미 KST로 저장되어 있으므로 이중 오프셋 없이 날짜 추출)
 function formatKST(dateStr: string): string {
   if (!dateStr) return '-';
   try {
-    // 1) ISO 문자열 (e.g. 2026-09-15T07:36:00.000Z)
-    if (dateStr.includes('T') || dateStr.endsWith('Z')) {
-      const d = new Date(dateStr);
-      return d.toLocaleString('ko-KR', {
-        timeZone: 'Asia/Seoul',
-        month: 'numeric',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-    }
-
-    // 2) 일반 날짜시간 문자열 (e.g. 2026-09-15 16:36:00)
-    const parts = dateStr.split(' ');
+    const clean = dateStr.replace('T', ' ').replace('Z', '').split('.')[0].trim();
+    const parts = clean.split(' ');
     if (parts.length === 2) {
       const [, m, d] = parts[0].split('-');
       const [hh, mm] = parts[1].split(':');
@@ -76,6 +64,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
   isLoggedIn = false,
   currentHand = 'RIGHT',
   onStartRecordSession,
+  refreshTrigger,
 }) => {
   // 기록 측정 설정
   const [selectedHand, setSelectedHand] = useState<HandType>(currentHand);
@@ -155,9 +144,9 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchRecords(false, controller.signal);
+    fetchRecords(Boolean(refreshTrigger), controller.signal);
     return () => controller.abort();
-  }, [fetchRecords]);
+  }, [fetchRecords, refreshTrigger]);
 
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const lastRefreshTimeRef = useRef<number>(0);
@@ -400,7 +389,7 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] text-neutral-500">
               {viewTab === 'RANKING'
-                ? '사용자별 최고 기록 기준 (정확도 90% 이상, 최근 일주일 집계)'
+                ? '종목별 순위 (정확도 90% 이상, 최근 일주일 집계)'
                 : isLoggedIn
                 ? '내 최근 기록 기준'
                 : '전체 최근 기록 기준'}

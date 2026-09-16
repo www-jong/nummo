@@ -37,16 +37,12 @@ interface RecentPracticeHistoryProps {
 function formatKST(dateStr: string): string {
   if (!dateStr) return '-';
   try {
-    const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) {
-      return d.toLocaleString('ko-KR', {
-        timeZone: 'Asia/Seoul',
-        month: 'numeric',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
+    const clean = dateStr.replace('T', ' ').replace('Z', '').split('.')[0].trim();
+    const parts = clean.split(' ');
+    if (parts.length === 2) {
+      const [, m, d] = parts[0].split('-');
+      const [hh, mm] = parts[1].split(':');
+      return `${Number(m)}월 ${Number(d)}일 ${hh}:${mm}`;
     }
   } catch {
     // fallback
